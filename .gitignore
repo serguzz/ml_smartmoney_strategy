@@ -3,6 +3,7 @@ data/
 models/
 predictions/
 catboost_info/
+__pycache__/
 
 # Ignore specific file
 scratch.py
