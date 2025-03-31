@@ -1,0 +1,8 @@
+# Ignore directories
+data/
+models/
+predictions/
+catboost_info/
+
+# Ignore specific file
+scratch.py

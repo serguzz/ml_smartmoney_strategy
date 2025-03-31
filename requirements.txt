@@ -1,0 +1,9 @@
+numpy
+pandas
+scikit-learn
+ta
+matplotlib
+xgboost
+catboost
+pickle
+requests
