@@ -22,30 +22,33 @@ def backtest(symbol):
             return
         
         df = pd.read_csv(file_path)
-        num_trades = 0
-        total_outcome = 0
-        
-        for _, row in df.iterrows():
-            xgb_proba = row["xgb_proba"]
-            cat_proba = row["cat_proba"]
-            actual = row["actual"]
-            
-            for model_proba in [xgb_proba, cat_proba]:
+        num_trades = {
+            'xgb': 0,
+            'cat': 0
+            }
+        total_outcome = {
+            'xgb': 0,
+            'cat': 0
+            }
+
+        for model_name in ["xgb", "cat"]:
+            for _, row in df.iterrows():
+                actual = row["actual"]
+                model_proba = row[f"{model_name}_proba"]
                 if model_proba > win_threshold:
-                    num_trades += 1
+                    num_trades[model_name] += 1
                     if direction == "long":
                         if actual == 1:
-                            total_outcome += OUTCOME_LONG
+                            total_outcome[model_name] += OUTCOME_LONG
                         else:
-                            total_outcome -= OUTCOME_SHORT
+                            total_outcome[model_name] -= OUTCOME_SHORT
                     else:
                         if actual == 1:
-                            total_outcome += OUTCOME_SHORT
+                            total_outcome[model_name] += OUTCOME_SHORT
                         else:
-                            total_outcome -= OUTCOME_LONG
-        
-        results.append({"direction": direction, "symbol": symbol, "num_trades": num_trades, "total_outcome": total_outcome})
+                            total_outcome[model_name] -= OUTCOME_LONG
 
+            results.append({"model": model_name, "direction": direction, "symbol": symbol, "num_trades": num_trades[model_name], "total_outcome": total_outcome[model_name]})
 
 def backtest_all():
     print("\nStarting backtesting...")
@@ -56,7 +59,7 @@ def backtest_all():
     # Summary Results
     print("Backtesting Summary:")
     for res in results:
-        print(f"{res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Total Outcome: {res['total_outcome']:.4f}")
+        print(f"{res['model']} {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Total Outcome: {res['total_outcome']:.4f}")
 
 if __name__ == "__main__":
     backtest_all()
