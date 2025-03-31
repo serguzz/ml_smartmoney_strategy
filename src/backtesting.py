@@ -59,7 +59,7 @@ def backtest_all():
     # Summary Results
     print("Backtesting Summary:")
     for res in results:
-        print(f"{res['model']} {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Total Outcome: {res['total_outcome']:.4f}")
+        print(f"Model: {res['model']}, {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Total Outcome: {res['total_outcome']:.4f}")
 
 if __name__ == "__main__":
     backtest_all()
