@@ -7,7 +7,7 @@ from sklearn.metrics import average_precision_score
 import pickle
 import numpy as np
 
-from config import TECHNICALS_DIR, STOPLOSS, TAKEPROFIT
+from config import TECHNICALS_DIR, TARGETS_DIR, STOPLOSS, TAKEPROFIT
 # from indicators import shift_growth_cols
 
 # Directories
@@ -17,6 +17,7 @@ PREDICTIONS_DIR = "predictions"
 # Ensure directories exist
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(PREDICTIONS_DIR, exist_ok=True)
+os.makedirs(TARGETS_DIR, exist_ok=True)
 
 # Features & Target
 FEATURE_COLS = ["ema50_100_bullish", "ema50_200_bullish",
@@ -33,6 +34,7 @@ FEATURE_COLS += shift_growth_cols
 # This function uses numpy's sliding window view to create a 2D array of future highs and lows
 # and checks for the conditions in a vectorized manner.
 # This is more efficient than a loop-based approach.
+# TODO: Add target for short trading
 def add_target(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
     """
     Calculates the target column based on whether the price reaches +2% before dropping -1% within the next future_window candles.
@@ -92,6 +94,8 @@ def train_models():
                 df.dropna(inplace=True)
 
                 df = add_target(df)  # Ensure target is added
+                # Save df with target column for future reference
+                df.to_csv(os.path.join(TARGETS_DIR, filename), index=False)
                 
                 X = df[FEATURE_COLS]
                 y = df[target_col]

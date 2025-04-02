@@ -4,6 +4,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OHLCV_DIR = os.path.join(BASE_DIR, "../data/ohlcv")
 TECHNICALS_DIR = os.path.join(BASE_DIR, "../data/technicals")
+TARGETS_DIR = os.path.join(BASE_DIR, "../data/targets")
 PREDICTIONS_DIR = "predictions"
 
 # Binance API Constants
