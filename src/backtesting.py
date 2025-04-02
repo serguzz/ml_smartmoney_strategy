@@ -3,7 +3,7 @@ import pandas as pd
 from config import SYMBOLS, PREDICTIONS_DIR
 
 # Constants
-LONG_THRESHOLD = 0.55
+LONG_THRESHOLD = 0.65
 SHORT_THRESHOLD = 0.5
 OUTCOME_LONG = 0.02
 OUTCOME_SHORT = 0.01
@@ -26,6 +26,14 @@ def backtest(symbol):
             'xgb': 0,
             'cat': 0
             }
+        win_trades = {
+            'xgb': 0,
+            'cat': 0
+            }
+        loss_trades = {
+            'xgb': 0,
+            'cat': 0
+            }
         total_outcome = {
             'xgb': 0,
             'cat': 0
@@ -40,15 +48,19 @@ def backtest(symbol):
                     if direction == "long":
                         if actual == 1:
                             total_outcome[model_name] += OUTCOME_LONG
+                            win_trades[model_name] += 1
                         else:
                             total_outcome[model_name] -= OUTCOME_SHORT
+                            loss_trades[model_name] += 1
                     else:
                         if actual == 1:
                             total_outcome[model_name] += OUTCOME_SHORT
+                            win_trades[model_name] += 1
                         else:
                             total_outcome[model_name] -= OUTCOME_LONG
+                            loss_trades[model_name] += 1
 
-            results.append({"model": model_name, "direction": direction, "symbol": symbol, "num_trades": num_trades[model_name], "total_outcome": total_outcome[model_name]})
+            results.append({"model": model_name, "direction": direction, "symbol": symbol, "num_trades": num_trades[model_name], "win_trades": win_trades[model_name], "total_outcome": total_outcome[model_name]})
 
 def backtest_all():
     print("\nStarting backtesting...")
@@ -59,7 +71,7 @@ def backtest_all():
     # Summary Results
     print("Backtesting Summary:")
     for res in results:
-        print(f"Model: {res['model']}, {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Total Outcome: {res['total_outcome']:.4f}")
+        print(f"Model: {res['model']}, {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Win Trades: {res['win_trades']}, Total Outcome: {res['total_outcome']:.4f}")
 
 if __name__ == "__main__":
     backtest_all()
