@@ -16,3 +16,7 @@ END_DATE = "2025-03-26"
 # Ensure directories exist
 os.makedirs(OHLCV_DIR, exist_ok=True)
 os.makedirs(TECHNICALS_DIR, exist_ok=True)
+
+# Backtesting Constants
+STOPLOSS = 0.01
+TAKEPROFIT = 0.02
