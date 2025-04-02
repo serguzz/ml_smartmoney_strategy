@@ -7,7 +7,7 @@ from sklearn.metrics import average_precision_score
 import pickle
 import numpy as np
 
-from config import TECHNICALS_DIR
+from config import TECHNICALS_DIR, STOPLOSS, TAKEPROFIT
 # from indicators import shift_growth_cols
 
 # Directories
@@ -29,28 +29,47 @@ for i in range(1, 6):
 # Add shift growth columns to feature columns
 FEATURE_COLS += shift_growth_cols
 
-# Define the target function
-def add_target(df, future_window=20, up_threshold=0.02, down_threshold=0.01):
-    target = np.zeros(len(df))  # Default to 0
+# Target function using numpy for performance
+# This function uses numpy's sliding window view to create a 2D array of future highs and lows
+# and checks for the conditions in a vectorized manner.
+# This is more efficient than a loop-based approach.
+def add_target(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
+    """
+    Calculates the target column based on whether the price reaches +2% before dropping -1% within the next future_window candles.
+    """
+    
+    # freqai example: df['&s-up_or_down'] = np.where( df["high"].shift(-future_window) > df["close"], 'up', 'down')
+    # Check if the take profit price is reached           
+    df['tp_reached'] = df.apply(
+        lambda row: 1 if (df['high'].shift(-1).rolling(window=future_window, min_periods=1)
+                          .apply(lambda x: (x >= row['close'] * (1 + takeprofit)).any(), raw=True)).iloc[row.name] 
+        else 0, 
+        axis=1
+    )
+     
+    # Check when the take profit price is reached
+    df['tp_reached_at'] = df.apply(
+        lambda row: (df['high'].shift(-1).rolling(window=future_window, min_periods=1)
+                    .apply(lambda x: np.argmax(x >= row['close'] * (1 + takeprofit)) + 1 
+                            if (x >= row['close'] * (1 + takeprofit)).any() else future_window, raw=True)
+                    ).iloc[row.name], 
+        axis=1
+    )
 
-    for i in range(len(df)):
-        close_price = df.loc[i, 'close']
-        high_threshold = close_price * (1 + up_threshold)
-        low_threshold = close_price * (1 - down_threshold)
-        
-        future_highs = df.loc[i+1:i+future_window, 'high']
-        future_lows = df.loc[i+1:i+future_window, 'low']
-
-        # Find the first index where high exceeds the 2% threshold
-        high_reach_idx = (future_highs >= high_threshold).idxmax() if (future_highs >= high_threshold).any() else None
-
-        if high_reach_idx is not None:
-            # Check if low falls below -1% threshold before reaching the high target
-            low_drops = (future_lows.loc[i+1:high_reach_idx] <= low_threshold).any()
-            if not low_drops:
-                target[i] = 1    
-    df['target_long'] = target
-    # TODO: Add target_short logic
+    # Check if the stop loss was reached before the target
+    df['sl_reached'] = df.apply(
+        lambda row: 1 if (df['low'].shift(-1).rolling(int(row['tp_reached_at']), min_periods=1)
+                          .apply(lambda x: (x <= row['close'] * (1 - stoploss)).any(), raw=True)).iloc[row.name] 
+        else 0, 
+        axis=1
+    )
+    
+    # Set target based on conditions
+    df['target_long'] = np.where(
+        (df['tp_reached'] == 1) & (df['sl_reached'] == 0),
+        1,  # Target reached
+        0   # Target not reached
+    )
     return df
 
 # Function to train models
