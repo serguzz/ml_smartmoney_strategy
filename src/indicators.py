@@ -29,7 +29,7 @@ def add_technical_indicators(df):
     return df
 
 # Function to generate Smart Money Concepts (BOS and CHOCH)
-def add_smc_features(df):
+def add_smc_indicators(df):
     STRUCTURE_THRESHOLD = 4  # Threshold for structure distance
     ROLLING_WINDOW = 10  # Rolling window for local extrema detection
 
@@ -67,7 +67,7 @@ def prepare_technical_data():
     for symbol in SYMBOLS:
         df = fetch_binance_data(symbol, INTERVAL, START_DATE, END_DATE)
         df = add_technical_indicators(df)
-        df = add_smc_features(df)
+        df = add_smc_indicators(df)
         df.dropna(inplace=True)
         all_data[symbol] = df
         df.to_csv(f"{TECHNICALS_DIR}/{symbol}.csv", index=False)
