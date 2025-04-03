@@ -7,7 +7,7 @@ from sklearn.metrics import average_precision_score
 import pickle
 import numpy as np
 
-from config import TECHNICALS_DIR, TARGETS_DIR, STOPLOSS, TAKEPROFIT
+from config import INDICATORS_DIR, TARGETS_DIR, STOPLOSS, TAKEPROFIT
 # from indicators import shift_growth_cols
 
 # Directories
@@ -84,13 +84,13 @@ def train_models():
         # Define target column based on direction
         target_col = f"target_{direction}"
         # Load data and train models
-        for filename in os.listdir(TECHNICALS_DIR):
+        for filename in os.listdir(INDICATORS_DIR):
             if filename.endswith(".csv"):
                 pair = filename.replace(".csv", "")
                 print(f"Training models for {pair}...")
                 
                 # Load dataset
-                df = pd.read_csv(os.path.join(TECHNICALS_DIR, filename))
+                df = pd.read_csv(os.path.join(INDICATORS_DIR, filename))
                 df.dropna(inplace=True)
 
                 df = add_target(df)  # Ensure target is added

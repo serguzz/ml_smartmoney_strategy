@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import requests
 from datetime import datetime
-from config import BASE_URL, SYMBOLS, INTERVAL, START_DATE, END_DATE, OHLCV_DIR, TECHNICALS_DIR
+from config import BASE_URL, SYMBOLS, INTERVAL, START_DATE, END_DATE, OHLCV_DIR
 
 # Constants
 SECONDS_PER_HOUR = 60 * 60

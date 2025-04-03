@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import argrelextrema
 import ta
 from fetch_data import fetch_binance_data
-from config import SYMBOLS, INTERVAL, START_DATE, END_DATE, TECHNICALS_DIR
+from config import SYMBOLS, INTERVAL, START_DATE, END_DATE, INDICATORS_DIR
 
 # Constants
 # SYMBOLS = ["TESTUSDT"]
@@ -70,7 +70,7 @@ def prepare_technical_data():
         df = add_smc_indicators(df)
         df.dropna(inplace=True)
         all_data[symbol] = df
-        df.to_csv(f"{TECHNICALS_DIR}/{symbol}.csv", index=False)
+        df.to_csv(f"{INDICATORS_DIR}/{symbol}.csv", index=False)
     
     print("Technical indicators added!")
     return all_data
