@@ -7,12 +7,8 @@ from sklearn.metrics import average_precision_score
 import pickle
 import numpy as np
 
-from config import INDICATORS_DIR, TARGETS_DIR, STOPLOSS, TAKEPROFIT
+from config import INDICATORS_DIR, TARGETS_DIR, STOPLOSS, TAKEPROFIT, MODELS_DIR, PREDICTIONS_DIR
 # from indicators import shift_growth_cols
-
-# Directories
-MODELS_DIR = "models"
-PREDICTIONS_DIR = "predictions"
 
 # Ensure directories exist
 os.makedirs(MODELS_DIR, exist_ok=True)

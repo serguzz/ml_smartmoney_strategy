@@ -19,7 +19,7 @@ This project focuses on developing a machine learning-based strategy for trading
 ## Project Structure
 
 ```
-smartmoney_ML_strategy/
+smartmoney_ml_strategy/
 ├── data/               # Raw and processed data
 ├── models/             # Saved machine learning models
 ├── predictions/        # Saved predictions of the models
