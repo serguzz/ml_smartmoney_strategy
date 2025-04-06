@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import argrelextrema
-import ta
+# import ta
+import talib.abstract as ta
 from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
 from config import SYMBOLS, INTERVAL, START_DATE, END_DATE, INDICATORS_DIR
 
@@ -11,10 +12,12 @@ shift_growth_cols = []
 
 # Function to generate technical indicators
 def add_technical_indicators(df):
-    df['ema50'] = ta.trend.ema_indicator(df['close'], window=50)
-    df['ema100'] = ta.trend.ema_indicator(df['close'], window=100)
-    df['ema200'] = ta.trend.ema_indicator(df['close'], window=200)
-    df['rsi'] = ta.momentum.rsi(df['close'], window=14)
+    # df['ema50'] = ta.trend.ema_indicator(df['close'], window=50)  ta version
+    df['ema50'] = ta.EMA(df['close'], window=50)
+    df['ema100'] = ta.EMA(df['close'], window=100)
+    df['ema200'] = ta.EMA(df['close'], window=200)
+    # df['rsi'] = ta.momentum.rsi(df['close'], window=14)   # ta version
+    df['rsi'] = ta.RSI(df['close'], window=14)
     df['ema50_200_bullish'] = (df['ema50'] > df['ema200']).astype(int)
     df['ema50_100_bullish'] = (df['ema50'] > df['ema100']).astype(int)
     df['rsi_oversold'] = (df['rsi'] < 30).astype(int)

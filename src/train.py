@@ -92,7 +92,7 @@ def train_models():
         #     os.makedirs(PREDICTIONS_DIR, exist_ok=True)
         #     os.makedirs(TARGETS_DIR, exist_ok=True)
         #     for filename in os.listdir(INDICATORS_DIR):
-        for market in ["futures"]:
+        for market in ["spot", "futures"]:
             ############################################################################
             # Define subdirectories for spot and futures
             ############################################################################
