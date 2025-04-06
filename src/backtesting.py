@@ -7,6 +7,9 @@ from config import MODEL_NAMES
 LONG_THRESHOLD = 0.50
 SHORT_THRESHOLD = 0.5
 
+TAKER_FEE = 0.001  # Example exchange fee (0.1%)
+MAKER_FEE = 0.0005  # Example exchange fee (0.05%)
+
 # Backtesting Results
 results = []
 
@@ -48,10 +51,10 @@ def backtest(symbol):
                     if model_proba > win_threshold:
                         num_trades += 1
                         if actual == 1:
-                            total_outcome += TAKEPROFIT
+                            total_outcome += (TAKEPROFIT - MAKER_FEE)
                             win_trades += 1
                         else:
-                            total_outcome -= STOPLOSS
+                            total_outcome -= (STOPLOSS + TAKER_FEE)
                             loss_trades += 1                
                 # Store results
                 results.append({"market": market, "model": model_name, "direction": direction, "symbol": symbol, "num_trades": num_trades, "win_trades": win_trades, "total_outcome": total_outcome})
