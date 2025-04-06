@@ -9,8 +9,9 @@ PREDICTIONS_DIR = os.path.join(BASE_DIR, "../predictions")
 MODELS_DIR = os.path.join(BASE_DIR, "../models")
 
 # Binance API Constants
-BASE_URL = "https://api.binance.com/api/v3/klines"
-SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT"]
+SPOT_BASE_URL = "https://api.binance.com/api/v3/klines"
+FUTURES_BASE_URL = "https://fapi.binance.com/fapi/v1/klines"
+SYMBOLS = ["BTCUSDT", "ETHUSDT"] # Add more symbols as needed: "SOLUSDT", "XRPUSDT"
 INTERVAL = "1h"
 START_DATE = "2023-01-01"
 END_DATE = "2025-03-26"

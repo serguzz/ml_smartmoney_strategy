@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import argrelextrema
 import ta
-from fetch_data import fetch_binance_data
+from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
 from config import SYMBOLS, INTERVAL, START_DATE, END_DATE, INDICATORS_DIR
 
 # Constants
@@ -63,17 +63,20 @@ def add_smc_indicators(df):
 
 # Fetch and preprocess data
 def prepare_technical_data():
-    all_data = {}
+    # all_data = {}
     for symbol in SYMBOLS:
-        df = fetch_binance_data(symbol, INTERVAL, START_DATE, END_DATE)
-        df = add_technical_indicators(df)
-        df = add_smc_indicators(df)
-        df.dropna(inplace=True)
-        all_data[symbol] = df
-        df.to_csv(f"{INDICATORS_DIR}/{symbol}.csv", index=False)
+        df_spot = fetch_binance_spot_data(symbol, INTERVAL, START_DATE, END_DATE)
+        df_futures = fetch_binance_futures_data(symbol, INTERVAL, START_DATE, END_DATE)
+        for df in [df_spot, df_futures]:
+            df = add_technical_indicators(df)
+            df = add_smc_indicators(df)
+            df.dropna(inplace=True)
+            # all_data[symbol] = df
+        df_spot.to_csv(f"{INDICATORS_DIR}/spot/{symbol}.csv", index=False)
+        df_futures.to_csv(f"{INDICATORS_DIR}/futures/{symbol}.csv", index=False)
     
-    print("Technical indicators added!")
-    return all_data
+    print("Technical indicators added to spot and futures!")
+    return # all_data
 
 if __name__ == "__main__":
     prepare_technical_data()
