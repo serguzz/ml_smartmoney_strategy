@@ -1,9 +1,11 @@
-python_version==3.12.9
+python_version==3.10.16
 numpy==1.26.4
-pandas==2.2.3
-scikit-learn==1.6.1
+scipy==1.11.4
+pandas==2.1.4
+scikit-learn==1.5.1
 ta==0.11.0
-matplotlib==3.10.0
-xgboost==2.1.1
-catboost==1.2.3
+TA-lib==0.4.32
+matplotlib==3.10.1
+xgboost==2.0.3
+catboost==1.2.2
 requests==2.32.3
