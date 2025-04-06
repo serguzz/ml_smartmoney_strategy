@@ -14,7 +14,7 @@ Models are build and tested for spot and futures markets.
 
 ## Usage
 
-1. Set up needed trading pairs, intervals (timeframe) and date range.
+1. Use config.py to set up needed trading pairs, intervals (timeframe) and date range.
 2. Run main.py to fetch data, add indicators, train models and backtest.
 3. Run separate scripts for the specific tasks:
     - fetch_data.py - fetches history prices and saves to data/ohlcv folder
