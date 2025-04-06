@@ -1,12 +1,10 @@
 import os
 import pandas as pd
-from config import SYMBOLS, PREDICTIONS_DIR
+from config import SYMBOLS, PREDICTIONS_DIR, STOPLOSS, TAKEPROFIT
 
 # Constants
-LONG_THRESHOLD = 0.65
+LONG_THRESHOLD = 0.50
 SHORT_THRESHOLD = 0.5
-OUTCOME_LONG = 0.02
-OUTCOME_SHORT = 0.01
 
 # Backtesting Results
 results = []
@@ -49,20 +47,12 @@ def backtest(symbol):
                     model_proba = row[f"{model_name}_proba"]
                     if model_proba > win_threshold:
                         num_trades[model_name] += 1
-                        if direction == "long":
-                            if actual == 1:
-                                total_outcome[model_name] += OUTCOME_LONG
-                                win_trades[model_name] += 1
-                            else:
-                                total_outcome[model_name] -= OUTCOME_SHORT
-                                loss_trades[model_name] += 1
+                        if actual == 1:
+                            total_outcome[model_name] += TAKEPROFIT
+                            win_trades[model_name] += 1
                         else:
-                            if actual == 1:
-                                total_outcome[model_name] += OUTCOME_SHORT
-                                win_trades[model_name] += 1
-                            else:
-                                total_outcome[model_name] -= OUTCOME_LONG
-                                loss_trades[model_name] += 1
+                            total_outcome[model_name] -= STOPLOSS
+                            loss_trades[model_name] += 1
 
                 results.append({"market": market, "model": model_name, "direction": direction, "symbol": symbol, "num_trades": num_trades[model_name], "win_trades": win_trades[model_name], "total_outcome": total_outcome[model_name]})
 
