@@ -19,3 +19,6 @@ END_DATE = "2025-03-26"
 # Backtesting Constants
 STOPLOSS = 0.01
 TAKEPROFIT = 0.02
+
+# Models used
+MODEL_NAMES = ["xgboost", "catboost"]  # Add more model names as needed

@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from config import SYMBOLS, PREDICTIONS_DIR, STOPLOSS, TAKEPROFIT
+from config import MODEL_NAMES
 
 # Constants
 LONG_THRESHOLD = 0.50
@@ -10,51 +11,50 @@ SHORT_THRESHOLD = 0.5
 results = []
 
 def backtest(symbol):
-
-# TODO: for market in ["spot", "futures"]:
-#   TODO: for direction in ["long", "short"]:
+    """
+    Backtest the model predictions for a given symbol.
+    This function calculates the number of trades, win trades, loss trades,
+    and total outcome based on the model predictions.
+    It iterates through the predictions for both spot and futures markets,
+    and for each model, it calculates the performance metrics.    
+    """
     for market in ["spot", "futures"]:
         predictions_subdir = os.path.join(PREDICTIONS_DIR, market)
         os.makedirs(predictions_subdir, exist_ok=True)
-        for direction in ["long"]:
-            win_threshold = LONG_THRESHOLD if direction == "long" else SHORT_THRESHOLD
-            file_path = f"{predictions_subdir}/{direction}_{symbol}_predictions.csv"
-            if not os.path.exists(file_path):
-                print(f"No predictions found for {symbol}.")
-                return
-            
-            df = pd.read_csv(file_path)
-            num_trades = {
-                'xgb': 0,
-                'cat': 0
-                }
-            win_trades = {
-                'xgb': 0,
-                'cat': 0
-                }
-            loss_trades = {
-                'xgb': 0,
-                'cat': 0
-                }
-            total_outcome = {
-                'xgb': 0,
-                'cat': 0
-                }
-
-            for model_name in ["xgb", "cat"]:
+        
+        for direction in ["long"]:           #   TODO: add short direction
+            for model_name in MODEL_NAMES:
+                win_threshold = LONG_THRESHOLD if direction == "long" else SHORT_THRESHOLD
+                file_path = f"{predictions_subdir}/{model_name}_{direction}_{symbol}_predictions.csv"
+                if not os.path.exists(file_path):
+                    print(f"No predictions found for {symbol}.")
+                    return
+                
+                df = pd.read_csv(file_path)
+                # Ensure the model probability column exists
+                if f"{model_name}_proba" not in df.columns:
+                    print(f"{model_name} probability column not found in {file_path}.")
+                    return
+                # Ensure the actual column exists
+                if "actual" not in df.columns:
+                    print(f"Actual column not found in {file_path}.")
+                    return
+                # Iterate through the DataFrame rows
+                # Calculate trades and outcomes
+                num_trades = win_trades = loss_trades = total_outcome = 0
                 for _, row in df.iterrows():
                     actual = row["actual"]
                     model_proba = row[f"{model_name}_proba"]
                     if model_proba > win_threshold:
-                        num_trades[model_name] += 1
+                        num_trades += 1
                         if actual == 1:
-                            total_outcome[model_name] += TAKEPROFIT
-                            win_trades[model_name] += 1
+                            total_outcome += TAKEPROFIT
+                            win_trades += 1
                         else:
-                            total_outcome[model_name] -= STOPLOSS
-                            loss_trades[model_name] += 1
-
-                results.append({"market": market, "model": model_name, "direction": direction, "symbol": symbol, "num_trades": num_trades[model_name], "win_trades": win_trades[model_name], "total_outcome": total_outcome[model_name]})
+                            total_outcome -= STOPLOSS
+                            loss_trades += 1                
+                # Store results
+                results.append({"market": market, "model": model_name, "direction": direction, "symbol": symbol, "num_trades": num_trades, "win_trades": win_trades, "total_outcome": total_outcome})
 
 def backtest_all():
     print("\nStarting backtesting...")
@@ -65,7 +65,7 @@ def backtest_all():
     # Summary Results
     print("Backtesting Summary:")
     for res in results:
-        print(f"Market: {res['market']}, Model: {res['model']}, {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Win Trades: {res['win_trades']}, Total Outcome: {res['total_outcome']:.4f}")
+        print(f"Market: {res['market']}, Model: {res['model']}, {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Win Trades: {res['win_trades']}, Total Outcome: {res['total_outcome']:.2f}")
 
 if __name__ == "__main__":
     backtest_all()

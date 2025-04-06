@@ -9,7 +9,7 @@ import numpy as np
 
 from config import INDICATORS_DIR, TARGETS_DIR, MODELS_DIR, PREDICTIONS_DIR
 from config import STOPLOSS, TAKEPROFIT
-# from indicators import shift_growth_cols
+from config import MODEL_NAMES
 
 # Ensure directories exist
 os.makedirs(INDICATORS_DIR, exist_ok=True)
@@ -85,7 +85,6 @@ def train_models():
         # Assuming the data is in INDICATORS_DIR/spot and INDICATORS_DIR/futures
         ############################################################################
         for market in ["spot", "futures"]:
-            ############################################################################
             # Define subdirectories for spot and futures
             ############################################################################
             indicators_subdir = os.path.join(INDICATORS_DIR, market)
@@ -94,14 +93,16 @@ def train_models():
             models_subdir = os.path.join(MODELS_DIR, market)
             os.makedirs(models_subdir, exist_ok=True)
             os.makedirs(prediction_subdir, exist_ok=True)
-            os.makedirs(targets_subdir, exist_ok=True)  
+            os.makedirs(targets_subdir, exist_ok=True)
+
+            # Iterate through indicators files and train models
             for filename in os.listdir(indicators_subdir):
                 if filename.endswith(".csv"):
                     pair = filename.replace(".csv", "")
                     print(f"Training models for {pair} {market}...")
                     
                     # Load dataset
-                    df = pd.read_csv(os.path.join(indicators_subdir, filename))
+                    df = pd.read_csv(os.path.join(indicators_subdir, filename)) 
                     df.dropna(inplace=True)
 
                     df = add_target(df)  # Ensure target is added
@@ -114,48 +115,43 @@ def train_models():
                     # Split data (80% train, 20% test)
                     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
                     
-                    # Train XGBoost Model
-                    xgb_model = xgb.XGBClassifier(max_depth=5, reg_lambda=20, eval_metric='logloss')
-                    xgb_model.fit(X_train, y_train)
-                    
-                    # Train CatBoost Model
-                    cat_model = cb.CatBoostClassifier(l2_leaf_reg=20, depth=5, verbose=0)
-                    cat_model.fit(X_train, y_train)
-                    
-                    # Save models
-                    with open(os.path.join(models_subdir, f"{direction}_{pair}_xgb.pkl"), "wb") as f:
-                        pickle.dump(xgb_model, f)
-                    with open(os.path.join(models_subdir, f"{direction}_{pair}_cat.pkl"), "wb") as f:
-                        pickle.dump(cat_model, f)
-                    
-                    # Predict probabilities on train set
-                    xgb_probs_train = xgb_model.predict_proba(X_train)[:, 1]
-                    cat_probs_train = cat_model.predict_proba(X_train)[:, 1] 
+                    # Define models
+                    models = {
+                        "xgboost": xgb.XGBClassifier(max_depth=5, reg_lambda=20, eval_metric='logloss'),
+                        "catboost": cb.CatBoostClassifier(l2_leaf_reg=20, depth=5, verbose=0)
+                    }
+                    # Train models
+                    for model_name in MODEL_NAMES:
+                        model = models[model_name]
+                        model.fit(X_train, y_train)
 
-                    # Predict probabilities on test set
-                    xgb_probs_test = xgb_model.predict_proba(X_test)[:, 1]  # Probability of target=1
-                    cat_probs_test = cat_model.predict_proba(X_test)[:, 1]
-                    
-                    # Evaluate Precision on train set
-                    avg_precision_xgb_train = average_precision_score(y_train, xgb_probs_train)
-                    avg_precision_cat_train = average_precision_score(y_train, cat_probs_train)
+                        # Save models
+                        with open(os.path.join(models_subdir, f"{direction}_{pair}_{model_name}.pkl"), "wb") as f:
+                            pickle.dump(model, f)
 
-                    # Evaluate Precision on test set
-                    avg_precision_xgb_test = average_precision_score(y_test, xgb_probs_test)
-                    avg_precision_cat_test = average_precision_score(y_test, cat_probs_test)
-                                
-                    print(f"{pair} {direction} - XGB Avg Precision train: {avg_precision_xgb_train:.4f}")
-                    print(f"{pair} {direction} - CatBoost Avg Precision train: {avg_precision_cat_train:.4f}")
-                    print(f"{pair} {direction} - XGB Avg Precision test: {avg_precision_xgb_test:.4f}")
-                    print(f"{pair} {direction} - CatBoost Avg Precision test: {avg_precision_cat_test:.4f}")
-            
-                    # Save predictions
-                    predictions_df = pd.DataFrame({
-                        "actual": y_test,
-                        "xgb_proba": xgb_probs_test,
-                        "cat_proba": cat_probs_test
-                    })
-                    predictions_df.to_csv(os.path.join(prediction_subdir, f"{direction}_{pair}_predictions.csv"), index=False)
+                        # Predict probabilities on train set
+                        model_probs_train = model.predict_proba(X_train)[:, 1]
+
+                        # Predict probabilities on test set
+                        model_probs_test = model.predict_proba(X_test)[:, 1]  # Probability of target=1
+                        
+                        # Evaluate Precision on train set
+                        avg_precision_model_train = average_precision_score(y_train, model_probs_train)
+
+                        # Evaluate Precision on test set
+                        avg_precision_model_test = average_precision_score(y_test, model_probs_test)
+                                    
+                        print(f"{pair} {direction} - {model_name} Avg Precision train: {avg_precision_model_train:.4f}")
+                        print(f"{pair} {direction} - {model_name} Avg Precision test: {avg_precision_model_test:.4f}")
+                
+                        # Save predictions
+                        predictions_df = pd.DataFrame({
+                            "actual": y_test,
+                            f"{model_name}_proba": model_probs_test,
+                        })
+                        predictions_df.to_csv(os.path.join(prediction_subdir, f"{model_name}_{direction}_{pair}_predictions.csv"), index=False)
+
+
             
     print("Training models complete! Predictions saved.")
 
