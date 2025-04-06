@@ -83,15 +83,7 @@ def train_models():
         target_col = f"target_{direction}"
         # Load data and train models for spot and futures (for each file)
         # Assuming the data is in INDICATORS_DIR/spot and INDICATORS_DIR/futures
-        # for data_type in ["spot", "futures"]:
-        #     INDICATORS_DIR = os.path.join(INDICATORS_DIR, data_type)
-        #     TARGETS_DIR = os.path.join(TARGETS_DIR, data_type)
-        #     PREDICTIONS_DIR = os.path.join(PREDICTIONS_DIR, data_type)
-        #     MODELS_DIR = os.path.join(MODELS_DIR, data_type)
-        #     os.makedirs(MODELS_DIR, exist_ok=True)
-        #     os.makedirs(PREDICTIONS_DIR, exist_ok=True)
-        #     os.makedirs(TARGETS_DIR, exist_ok=True)
-        #     for filename in os.listdir(INDICATORS_DIR):
+        ############################################################################
         for market in ["spot", "futures"]:
             ############################################################################
             # Define subdirectories for spot and futures

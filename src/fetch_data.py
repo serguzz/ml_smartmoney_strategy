@@ -8,6 +8,11 @@ from config import OHLCV_DIR
 # Constants
 SECONDS_PER_HOUR = 60 * 60
 
+# Ensure directories exist
+os.makedirs(OHLCV_DIR, exist_ok=True)
+for market in ["spot", "futures"]:
+    os.makedirs(os.path.join(OHLCV_DIR, market), exist_ok=True)
+
 # Function to fetch historical data with pagination
 def fetch_binance_spot_data(symbol, interval, start_date, end_date):
     # File path for saving spot data
@@ -16,7 +21,7 @@ def fetch_binance_spot_data(symbol, interval, start_date, end_date):
         print(f"Price data for {symbol} already exists. Loading from file...")
         return pd.read_csv(file_path, parse_dates=['timestamp'])
     
-    print(f"Fetching data for {symbol}...")
+    print(f"Fetching Spot prices for {symbol}...")
     start_time = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp()) * 1000
     end_time = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp()) * 1000
     all_data = []
@@ -44,7 +49,7 @@ def fetch_binance_futures_data(symbol, interval, start_date, end_date):
         print(f"Futures price data for {symbol} already exists. Loading from file...")
         return pd.read_csv(file_path, parse_dates=['timestamp'])
 
-    print(f"Fetching futures data for {symbol}...")
+    print(f"Fetching Futures prices for {symbol}...")
     start_time = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp()) * 1000
     end_time = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp()) * 1000
     all_data = []

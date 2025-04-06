@@ -1,18 +1,23 @@
+import os
 import numpy as np
 from scipy.signal import argrelextrema
 # import ta
-import talib.abstract as ta
+import talib.abstract as ta # use talib.abstract for freqtrade compatibility
 from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
 from config import SYMBOLS, INTERVAL, START_DATE, END_DATE, INDICATORS_DIR
 
+# Ensure indicators directories exist
+os.makedirs(INDICATORS_DIR, exist_ok=True)
+os.makedirs(os.path.join(INDICATORS_DIR, "spot"), exist_ok=True)
+os.makedirs(os.path.join(INDICATORS_DIR, "futures"), exist_ok=True)
+
 # Constants
-# SYMBOLS = ["TESTUSDT"]
 SECONDS_PER_HOUR = 60 * 60
 shift_growth_cols = []
 
 # Function to generate technical indicators
 def add_technical_indicators(df):
-    # df['ema50'] = ta.trend.ema_indicator(df['close'], window=50)  ta version
+    # df['ema50'] = ta.trend.ema_indicator(df['close'], window=50)  # ta version
     df['ema50'] = ta.EMA(df['close'], window=50)
     df['ema100'] = ta.EMA(df['close'], window=100)
     df['ema200'] = ta.EMA(df['close'], window=200)

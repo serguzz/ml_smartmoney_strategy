@@ -16,10 +16,6 @@ INTERVAL = "1h"
 START_DATE = "2023-01-01"
 END_DATE = "2025-03-26"
 
-# Ensure directories exist
-os.makedirs(OHLCV_DIR, exist_ok=True)
-os.makedirs(INDICATORS_DIR, exist_ok=True)
-
 # Backtesting Constants
 STOPLOSS = 0.01
 TAKEPROFIT = 0.02
