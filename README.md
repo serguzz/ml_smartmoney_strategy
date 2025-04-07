@@ -15,11 +15,11 @@ Models are build and tested for spot and futures markets. Both Long and Short tr
 ## Usage
 
 1. Use config.py to set up needed trading pairs, intervals (timeframe) and date range.
-2. Run main.py to fetch data, add indicators, train models and backtest.
+2. Run main.py to fetch data, add indicators, train models and backtest. Among other, this will create folders structure of the project.
 3. Run separate scripts for the specific tasks:
     - fetch_data.py - fetches history prices and saves to data/ohlcv folder
     - indicators.py - adds indicators, saves to data/indicators folder
-    - train.py - trains and saves models
+    - train.py - adds targets, trains and saves models
     - backtesting.py - backtests models predictions
 
 ## Project Structure

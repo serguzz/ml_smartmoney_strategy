@@ -1,11 +1,11 @@
 import os
+from datetime import datetime
 import pandas as pd
 import xgboost as xgb
 import catboost as cb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import average_precision_score
 import pickle
-import numpy as np
 
 from config import INDICATORS_DIR, TARGETS_DIR, MODELS_DIR, PREDICTIONS_DIR
 from config import STOPLOSS, TAKEPROFIT
@@ -114,25 +114,35 @@ def add_target_short(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT,
 # Function to train models
 def train_models():
     print("\nTraining models...")
+    # Define version for the current training session
+    ############################################################################
+    version = "v_" + datetime.now().strftime("%Y%m%d_%H%M%S")    
 
     # Training long and short models for TARGET_LONG and TARGET_SHORT respectively
-    # TODO: for direction in ["long", "short"]:
     for direction in ["long", "short"]:      
         # Define target column based on direction
         target_col = f"target_{direction}"
         # Load data and train models for spot and futures (for each file)
         # Assuming the data is in INDICATORS_DIR/spot and INDICATORS_DIR/futures
         ############################################################################
-        for market in ["spot", "futures"]:
-            # Define subdirectories for spot and futures
+        for market in ["spot", "futures"]:            
+            # Create directories for models and predictions
             ############################################################################
             indicators_subdir = os.path.join(INDICATORS_DIR, market)
             targets_subdir = os.path.join(TARGETS_DIR, market)
             prediction_subdir = os.path.join(PREDICTIONS_DIR, market)
             models_subdir = os.path.join(MODELS_DIR, market)
+
+            # Versioned subdirectory for predictions and models
+            versioned_pred_subdir = os.path.join(PREDICTIONS_DIR, f"{version}", market)
+            versioned_models_subdir = os.path.join(MODELS_DIR, f"{version}", market)
+            
+            # Create folders if they do not exist
             os.makedirs(models_subdir, exist_ok=True)
             os.makedirs(prediction_subdir, exist_ok=True)
             os.makedirs(targets_subdir, exist_ok=True)
+            os.makedirs(versioned_pred_subdir, exist_ok=True)
+            os.makedirs(versioned_models_subdir, exist_ok=True)
 
             # Iterate through indicators files and train models
             for filename in os.listdir(indicators_subdir):
@@ -168,9 +178,9 @@ def train_models():
                         model = models[model_name]
                         model.fit(X_train, y_train)
 
-                        # Save models
-                        with open(os.path.join(models_subdir, f"{direction}_{pair}_{model_name}.pkl"), "wb") as f:
-                            pickle.dump(model, f)
+                        # Save models to both directories
+                        for dir in [models_subdir, versioned_models_subdir]:
+                            pickle.dump(model, open(os.path.join(dir, f"{direction}_{pair}_{model_name}.pkl"), "wb"))
 
                         # Predict probabilities on train set
                         model_probs_train = model.predict_proba(X_train)[:, 1]
@@ -192,8 +202,10 @@ def train_models():
                             "actual": y_test,
                             f"{model_name}_proba": model_probs_test,
                         })
-                        predictions_df.to_csv(os.path.join(prediction_subdir, f"{model_name}_{direction}_{pair}_predictions.csv"), index=False)
-            
+                        # Save predictions to both directories (versioned and regular)
+                        for dir in [prediction_subdir, versioned_pred_subdir]:
+                            predictions_df.to_csv(os.path.join(dir, f"{model_name}_{direction}_{pair}_predictions.csv"), index=False)
+                        
     print("Training models complete! Predictions saved.")
 
 if __name__ == "__main__":
