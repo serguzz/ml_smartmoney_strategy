@@ -17,7 +17,10 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(PREDICTIONS_DIR, exist_ok=True)
 os.makedirs(TARGETS_DIR, exist_ok=True)
 
-# Features & Target
+# Constants
+PREDICTION_WINDOW = 20  # Number of candles to predict into the future
+
+# Features columns
 FEATURE_COLS = ["ema50_100_bullish", "ema50_200_bullish",
                 "rsi_overbought", "rsi_oversold", 
                 "bullish_trend_50", "bullish_trend_100", "bullish_trend_200",
@@ -28,7 +31,7 @@ for i in range(1, 6):
 # Add shift growth columns to feature columns
 FEATURE_COLS += shift_growth_cols
 
-def add_target_long(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
+def add_target_long(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
     """
     Adds 'target_long' column to df:
     target_long = 1 if price increases by `takeprofit` before dropping by `stoploss`
@@ -68,7 +71,7 @@ def add_target_long(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLO
     df['target_long'] = targets_long
     return df
 
-def add_target_short(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
+def add_target_short(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
     """
     Adds 'target_short' column to df:
     target_short = 1 if price decreases by `takeprofit` before uprising by `stoploss`
@@ -190,8 +193,6 @@ def train_models():
                             f"{model_name}_proba": model_probs_test,
                         })
                         predictions_df.to_csv(os.path.join(prediction_subdir, f"{model_name}_{direction}_{pair}_predictions.csv"), index=False)
-
-
             
     print("Training models complete! Predictions saved.")
 
