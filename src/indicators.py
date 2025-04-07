@@ -43,7 +43,7 @@ def add_smc_indicators(df):
 
     # Find local highs
     local_highs_idx = argrelextrema(df['high'].values, np.greater, order=ROLLING_WINDOW)[0]
-    df['local_high'] = np.nan
+    df['local_high'] = np.zeros(len(df))
     df.loc[local_highs_idx, 'local_high'] = df.loc[local_highs_idx, 'high']
 
     # Forward-fill the last detected high to avoid NaNs

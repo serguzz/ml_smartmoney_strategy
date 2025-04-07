@@ -18,7 +18,7 @@ def fetch_binance_spot_data(symbol, interval, start_date, end_date):
     # File path for saving spot data
     file_path = f"{OHLCV_DIR}/spot/{symbol}.csv"
     if os.path.exists(file_path):
-        print(f"Price data for {symbol} already exists. Loading from file...")
+        print(f"Spot data for {symbol} already exists. Loading from file...")
         return pd.read_csv(file_path, parse_dates=['timestamp'])
     
     print(f"Fetching Spot prices for {symbol}...")
@@ -60,7 +60,7 @@ def fetch_binance_futures_data(symbol, interval, start_date, end_date):
             "interval": interval,
             "startTime": start_time,
             "endTime": end_time,
-            "limit": 1500
+            "limit": 1000
         }
         response = requests.get(FUTURES_BASE_URL, params=params)
         response.raise_for_status()

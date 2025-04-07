@@ -5,7 +5,7 @@ from config import MODEL_NAMES
 
 # Constants
 LONG_THRESHOLD = 0.50
-SHORT_THRESHOLD = 0.5
+SHORT_THRESHOLD = 0.50
 
 TAKER_FEE = 0.001  # Example exchange fee (0.1%)
 MAKER_FEE = 0.0005  # Example exchange fee (0.05%)
@@ -68,7 +68,7 @@ def backtest_all():
     # Summary Results
     print("Backtesting Summary:")
     for res in results:
-        print(f"Market: {res['market']}, Model: {res['model']}, {res['direction']} {res['symbol']} - Trades: {res['num_trades']}, Win Trades: {res['win_trades']}, Total Outcome: {res['total_outcome']:.2f}")
+        print(f"Market: {res['market']}, Model: {res['model']}, {res['direction']} {res['symbol']} -  Tot Profit: {res['total_outcome']:.2f}, Trades: {res['num_trades']}, Wins: {res['win_trades']}, Win%: {res['win_trades'] / res['num_trades'] * 100:.1f}%")
 
 if __name__ == "__main__":
     backtest_all()

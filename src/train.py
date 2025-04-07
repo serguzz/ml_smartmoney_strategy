@@ -28,48 +28,45 @@ for i in range(1, 6):
 # Add shift growth columns to feature columns
 FEATURE_COLS += shift_growth_cols
 
-# Target function using numpy for performance
-# This function uses numpy's sliding window view to create a 2D array of future highs and lows
-# and checks for the conditions in a vectorized manner.
-# This is more efficient than a loop-based approach.
-# TODO: Add target for short trading
 def add_target(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
     """
-    Calculates the target column based on whether the price reaches +2% before dropping -1% within the next future_window candles.
+    Adds 'target_long' column to df:
+    target = 1 if price increases by `takeprofit` before dropping by `stoploss`
+             within the next `future_window` candles.
+    Otherwise, target = 0.
+    TODO: Add 'target_short' column for short trades
     """
-    
-    # freqai example: df['&s-up_or_down'] = np.where( df["high"].shift(-future_window) > df["close"], 'up', 'down')
-    # Check if the take profit price is reached           
-    df['tp_reached'] = df.apply(
-        lambda row: 1 if (df['high'].shift(-1).rolling(window=future_window, min_periods=1)
-                          .apply(lambda x: (x >= row['close'] * (1 + takeprofit)).any(), raw=True)).iloc[row.name] 
-        else 0, 
-        axis=1
-    )
-     
-    # Check when the take profit price is reached
-    df['tp_reached_at'] = df.apply(
-        lambda row: (df['high'].shift(-1).rolling(window=future_window, min_periods=1)
-                    .apply(lambda x: np.argmax(x >= row['close'] * (1 + takeprofit)) + 1 
-                            if (x >= row['close'] * (1 + takeprofit)).any() else future_window, raw=True)
-                    ).iloc[row.name], 
-        axis=1
-    )
+    targets_long = []
 
-    # Check if the stop loss was reached before the target
-    df['sl_reached'] = df.apply(
-        lambda row: 1 if (df['low'].shift(-1).rolling(int(row['tp_reached_at']), min_periods=1)
-                          .apply(lambda x: (x <= row['close'] * (1 - stoploss)).any(), raw=True)).iloc[row.name] 
-        else 0, 
-        axis=1
-    )
-    
-    # Set target based on conditions
-    df['target_long'] = np.where(
-        (df['tp_reached'] == 1) & (df['sl_reached'] == 0),
-        1,  # Target reached
-        0   # Target not reached
-    )
+    for i in range(len(df)):
+        entry_price = df.loc[i, 'close']
+        tp_price = entry_price * (1 + takeprofit)
+        sl_price = entry_price * (1 - stoploss)
+
+        tp_hit = False
+        sl_hit = False
+
+        for j in range(1, future_window + 1):
+            if i + j >= len(df):
+                break
+
+            high = df.loc[i + j, 'high']
+            low = df.loc[i + j, 'low']
+
+            if low <= sl_price:
+                sl_hit = True
+                break  # SL hit before TP → fail
+
+            if high >= tp_price:
+                tp_hit = True
+                break  # TP hit before SL → success
+
+        if tp_hit and not sl_hit:
+            targets_long.append(1)
+        else:
+            targets_long.append(0)
+
+    df['target_long'] = targets_long
     return df
 
 # Function to train models
