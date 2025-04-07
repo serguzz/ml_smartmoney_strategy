@@ -21,20 +21,19 @@ os.makedirs(TARGETS_DIR, exist_ok=True)
 FEATURE_COLS = ["ema50_100_bullish", "ema50_200_bullish",
                 "rsi_overbought", "rsi_oversold", 
                 "bullish_trend_50", "bullish_trend_100", "bullish_trend_200",
-                "bos", "choch"]
+                "bos_bullish", "choch_bullish", "bos_bearish", "choch_bearish"]
 shift_growth_cols = []
 for i in range(1, 6):
     shift_growth_cols.append(f'shift_{i}_growth')
 # Add shift growth columns to feature columns
 FEATURE_COLS += shift_growth_cols
 
-def add_target(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
+def add_target_long(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
     """
     Adds 'target_long' column to df:
-    target = 1 if price increases by `takeprofit` before dropping by `stoploss`
+    target_long = 1 if price increases by `takeprofit` before dropping by `stoploss`
              within the next `future_window` candles.
-    Otherwise, target = 0.
-    TODO: Add 'target_short' column for short trades
+    Otherwise, target_long = 0.
     """
     targets_long = []
 
@@ -69,13 +68,53 @@ def add_target(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
     df['target_long'] = targets_long
     return df
 
+def add_target_short(df, future_window=20, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
+    """
+    Adds 'target_short' column to df:
+    target_short = 1 if price decreases by `takeprofit` before uprising by `stoploss`
+             within the next `future_window` candles.
+    Otherwise, target_short = 0.
+    """
+    targets_short = []
+
+    for i in range(len(df)):
+        entry_price = df.loc[i, 'close']
+        tp_price = entry_price * (1 - takeprofit)
+        sl_price = entry_price * (1 + stoploss)
+
+        tp_hit = False
+        sl_hit = False
+
+        for j in range(1, future_window + 1):
+            if i + j >= len(df):
+                break
+
+            high = df.loc[i + j, 'high']
+            low = df.loc[i + j, 'low']
+
+            if high >= sl_price:
+                sl_hit = True
+                break  # SL hit before TP → fail
+
+            if low <= tp_price:
+                tp_hit = True
+                break  # TP hit before SL → success
+
+        if tp_hit and not sl_hit:
+            targets_short.append(1)
+        else:
+            targets_short.append(0)
+
+    df['target_short'] = targets_short
+    return df
+
 # Function to train models
 def train_models():
     print("\nTraining models...")
 
     # Training long and short models for TARGET_LONG and TARGET_SHORT respectively
     # TODO: for direction in ["long", "short"]:
-    for direction in ["long"]:      
+    for direction in ["long", "short"]:      
         # Define target column based on direction
         target_col = f"target_{direction}"
         # Load data and train models for spot and futures (for each file)
@@ -102,7 +141,11 @@ def train_models():
                     df = pd.read_csv(os.path.join(indicators_subdir, filename)) 
                     df.dropna(inplace=True)
 
-                    df = add_target(df)  # Ensure target is added
+                    # Add targets for Long and Short trading
+                    if direction == "long":
+                        df = add_target_long(df)
+                    else:
+                        df = add_target_short(df) 
                     # Save df with target column for future reference
                     df.to_csv(os.path.join(targets_subdir, filename), index=False)
                     

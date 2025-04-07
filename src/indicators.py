@@ -36,8 +36,8 @@ def add_technical_indicators(df):
         shift_growth_cols.append(f'shift_{i}_growth')
     return df
 
-# Function to generate Smart Money Concepts (BOS and CHOCH)
-def add_smc_indicators(df):
+# Add Smart Money indicators BOS and CHOCH for Long trades
+def add_smc_indicators_bullish(df):
     STRUCTURE_THRESHOLD = 4  # Threshold for structure distance
     ROLLING_WINDOW = 10  # Rolling window for local extrema detection
 
@@ -58,14 +58,48 @@ def add_smc_indicators(df):
     df['prev_high_distance'] = df.index - df['prev_high_idx']
 
     # Bullish BOS: Price closes above the previous high in an uptrend
-    df['bos'] = ((df['close'] > df['prev_high']) &
-                 (df['prev_high_distance'] > STRUCTURE_THRESHOLD) &
-                 (df['bullish_trend_50'] == 1)).astype(int)
+    df['bos_bullish'] = ((df['close'] > df['prev_high']) &
+                         (df['prev_high_distance'] > STRUCTURE_THRESHOLD) &
+                         (df['bullish_trend_50'] == 1)).astype(int)
 
     # Bullish CHOCH: Price closes above the previous high in a downtrend (trend shift)
-    df['choch'] = ((df['close'] > df['prev_high']) &
-                   (df['prev_high_distance'] > STRUCTURE_THRESHOLD) &
-                   (df['bullish_trend_50'] == 0)).astype(int)
+    df['choch_bullish'] = ((df['close'] > df['prev_high']) &
+                           (df['prev_high_distance'] > STRUCTURE_THRESHOLD) &
+                           (df['bullish_trend_50'] == 0)).astype(int)
+
+    return df
+
+
+# Add Smart Money indicators BOS and CHOCH for Short trades
+def add_smc_indicators_bearish(df):
+    STRUCTURE_THRESHOLD = 4  # Threshold for structure distance
+    ROLLING_WINDOW = 10  # Rolling window for local extrema detection
+
+    # Find local lows
+    local_lows_idx = argrelextrema(df['low'].values, np.less, order=ROLLING_WINDOW)[0]
+    df['local_low'] = np.zeros(len(df))
+    df.loc[local_lows_idx, 'local_low'] = df.loc[local_lows_idx, 'low']
+
+    # Forward-fill the last detected low to avoid NaNs
+    df['prev_low'] = df['local_low'].shift(1).ffill()
+
+    # Track the index of the last local low for structure distance calculation
+    df['prev_low_idx'] = np.nan
+    df.loc[local_lows_idx, 'prev_low_idx'] = local_lows_idx
+    df['prev_low_idx'] = df['prev_low_idx'].shift(1).ffill()
+
+    # Calculate distance from the previous low
+    df['prev_low_distance'] = df.index - df['prev_low_idx']
+
+    # Bearish BOS: Price closes below the previous low in a downtrend
+    df['bos_bearish'] = ((df['close'] < df['prev_low']) &
+                      (df['prev_low_distance'] > STRUCTURE_THRESHOLD) &
+                      (df['bullish_trend_50'] == 0)).astype(int) # no bullish trend
+
+    # Bearish CHOCH: Price closes below the previous low in an uptrend (trend shift)
+    df['choch_bearish'] = ((df['close'] < df['prev_low']) &
+                        (df['prev_low_distance'] > STRUCTURE_THRESHOLD) &
+                        (df['bullish_trend_50'] == 1)).astype(int) # bullish trend 
 
     return df
 
@@ -77,7 +111,8 @@ def prepare_technical_data():
         df_futures = fetch_binance_futures_data(symbol, INTERVAL, START_DATE, END_DATE)
         for df in [df_spot, df_futures]:
             df = add_technical_indicators(df)
-            df = add_smc_indicators(df)
+            df = add_smc_indicators_bullish(df)
+            df = add_smc_indicators_bearish(df)
             df.dropna(inplace=True)
             # all_data[symbol] = df
         df_spot.to_csv(f"{INDICATORS_DIR}/spot/{symbol}.csv", index=False)

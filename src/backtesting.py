@@ -25,7 +25,7 @@ def backtest(symbol):
         predictions_subdir = os.path.join(PREDICTIONS_DIR, market)
         os.makedirs(predictions_subdir, exist_ok=True)
         
-        for direction in ["long"]:           #   TODO: add short direction
+        for direction in ["long", "short"]:
             for model_name in MODEL_NAMES:
                 win_threshold = LONG_THRESHOLD if direction == "long" else SHORT_THRESHOLD
                 file_path = f"{predictions_subdir}/{model_name}_{direction}_{symbol}_predictions.csv"
