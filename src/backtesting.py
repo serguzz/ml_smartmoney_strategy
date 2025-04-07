@@ -4,8 +4,10 @@ from config import SYMBOLS, PREDICTIONS_DIR, STOPLOSS, TAKEPROFIT
 from config import MODEL_NAMES
 
 # Constants
-LONG_THRESHOLD = 0.50
-SHORT_THRESHOLD = 0.50
+PREDICTION_THRESHOLDS = {
+    "long": 0.50,
+    "short": 0.50
+}
 
 TAKER_FEE = 0.001  # Example exchange fee (0.1%)
 MAKER_FEE = 0.0005  # Example exchange fee (0.05%)
@@ -27,7 +29,6 @@ def backtest(symbol):
         
         for direction in ["long", "short"]:
             for model_name in MODEL_NAMES:
-                win_threshold = LONG_THRESHOLD if direction == "long" else SHORT_THRESHOLD
                 file_path = f"{predictions_subdir}/{model_name}_{direction}_{symbol}_predictions.csv"
                 if not os.path.exists(file_path):
                     print(f"No predictions found for {symbol}.")
@@ -48,7 +49,7 @@ def backtest(symbol):
                 for _, row in df.iterrows():
                     actual = row["actual"]
                     model_proba = row[f"{model_name}_proba"]
-                    if model_proba > win_threshold:
+                    if model_proba > PREDICTION_THRESHOLDS[direction]:
                         num_trades += 1
                         if actual == 1:
                             total_outcome += (TAKEPROFIT - MAKER_FEE)

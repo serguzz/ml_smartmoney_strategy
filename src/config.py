@@ -5,7 +5,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OHLCV_DIR = os.path.join(BASE_DIR, "../data/ohlcv")
 INDICATORS_DIR = os.path.join(BASE_DIR, "../data/indicators")
 TARGETS_DIR = os.path.join(BASE_DIR, "../data/targets")
-PREDICTIONS_DIR = os.path.join(BASE_DIR, "../predictions")
+PREDICTIONS_DIR = os.path.join(BASE_DIR, "../data/predictions")
 MODELS_DIR = os.path.join(BASE_DIR, "../models")
 
 # Binance API Constants
