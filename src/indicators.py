@@ -6,10 +6,10 @@ import talib.abstract as ta # use talib.abstract for freqtrade compatibility
 from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
 from config import SYMBOLS, INTERVAL, START_DATE, END_DATE, INDICATORS_DIR
 
-# Ensure indicators directories exist
+# Ensure indicators directories exist for spot and futures
 os.makedirs(INDICATORS_DIR, exist_ok=True)
-os.makedirs(os.path.join(INDICATORS_DIR, "spot"), exist_ok=True)
-os.makedirs(os.path.join(INDICATORS_DIR, "futures"), exist_ok=True)
+for market in ["spot", "futures"]:
+    os.makedirs(os.path.join(INDICATORS_DIR, market), exist_ok=True)
 
 # Constants
 SECONDS_PER_HOUR = 60 * 60

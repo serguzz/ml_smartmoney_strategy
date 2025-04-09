@@ -1,7 +1,8 @@
 # Smart Money ML Strategy
 
 This project focuses on developing a machine learning-based strategy for trading. The goal is to analyze market data, identify patterns, and make informed trading decisions using predictive models. Among various technical indicators, BOS - break of structure and CHOCH - change of character are used. Two boosting machine learning models are used for comparison: XGBoost and CatBoost.
-Models are build and tested for spot and futures markets. Both Long and Short trading is covered.
+Models are build and tested for spot and futures markets. Both Long and Short trading is covered. Models build by the project can be used in any other Python environment or framework where XGBoost and CatBoost libraries can be used.
+Versioning of models and predictions is supported. Versioned files are saved to separate folders.
 
 ## Features
 
