@@ -1,12 +1,16 @@
 import os
 import numpy as np
 import pandas as pd
-from config import SYMBOLS, PREDICTIONS_DIR, BACKTESTING_DIR, STOPLOSS, TAKEPROFIT
-from config import MODEL_NAMES
+from config import SYMBOLS, TIMEFRAMES, STOPLOSS, TAKEPROFIT
+from config import MODEL_NAMES, PREDICTIONS_DIR, BACKTESTING_DIR
 
 # Create backtesting directory if it doesn't exist
 os.makedirs(BACKTESTING_DIR, exist_ok=True)
+for timeframe in TIMEFRAMES:
+    # Create a subdirectory for each timeframe
+    os.makedirs(os.path.join(BACKTESTING_DIR, timeframe), exist_ok=True)
 
+# TODO: Stop iterating through thresholds if no trades executed at current threshold
 # Constants
 WIN_THRESHOLDS = [0.35, 0.40, 0.45, 0.50, 0.55, 0.65, 0.70, 0.75, 0.80, 0.85]
 
@@ -15,9 +19,10 @@ MAKER_FEE = 0.0005  # Example exchange fee (0.05%)
 
 # Read name of versioned predictions directory
 # From PREDICTIONS_DIR, get the latest version name
-def get_latest_version():
-    # Get all directories in PREDICTIONS_DIR
-    dirs = [d for d in os.listdir(PREDICTIONS_DIR) if os.path.isdir(PREDICTIONS_DIR)]
+def get_latest_version(timeframe):
+    # Get all directories in PREDICTIONS_DIR for the given timeframe
+    predictions_dir = os.path.join(PREDICTIONS_DIR, timeframe)
+    dirs = [d for d in os.listdir(predictions_dir) if os.path.isdir(predictions_dir)]
     # Sort directories by version number
     dirs.sort()
     # Return the latest directory name, '' if no directories found
@@ -29,7 +34,7 @@ def get_latest_version():
 # The function calculates the number of trades, win trades, loss trades,
 # and total outcome based on the model predictions
 # It iterates through prediction in a directory, whether current or versioned
-def backtest(symbol, threshold=0.50, version=''):
+def backtest(symbol, timeframe, threshold, version):
     """
     Backtest the model predictions for a given symbol.
     This function calculates the number of trades, win trades, loss trades,
@@ -40,12 +45,12 @@ def backtest(symbol, threshold=0.50, version=''):
     # Backtesting Results
     results = []
     for market in ["spot", "futures"]:
-        predictions_subdir = os.path.join(PREDICTIONS_DIR, version, market)
+        predictions_subdir = os.path.join(PREDICTIONS_DIR, timeframe, version, market)
         os.makedirs(predictions_subdir, exist_ok=True)
         
         for direction in ["long", "short"]:
             for model_name in MODEL_NAMES:
-                file_path = f"{predictions_subdir}/{model_name}_{direction}_{symbol}_predictions.csv"
+                file_path = os.path.join(predictions_subdir, f"{model_name}_{direction}_{symbol}_predictions.csv")
                 if not os.path.exists(file_path):
                     print(f"No predictions found for {symbol}.")
                     return
@@ -83,18 +88,17 @@ def backtest(symbol, threshold=0.50, version=''):
                     })
     return results
 
-def backtest_all():
+def backtest_all(timeframe):
     """
     Backtest all symbols with different thresholds.
     This function iterates through the symbols and thresholds,
     and calls the backtest function for each combination.
     It prints the summary of the backtesting results.
     """
-    print("\nStarting backtesting...")
     # Get the latest versioned predictions directory
-    latest_version = get_latest_version()
+    latest_version = get_latest_version(timeframe=timeframe)
     # create the versioned backtesting directory
-    versioned_backtesting_dir = os.path.join(BACKTESTING_DIR, latest_version)
+    versioned_backtesting_dir = os.path.join(BACKTESTING_DIR, timeframe, latest_version)
     os.makedirs(versioned_backtesting_dir, exist_ok=True)
 
     for version in ['', latest_version]:  # Add latest version and empty string for non-versioned
@@ -109,10 +113,11 @@ def backtest_all():
         for symbol in SYMBOLS:
             for threshold in WIN_THRESHOLDS:
                 all_results = []
-                results = backtest(symbol, threshold, version)
+                print(f"\nBacktesting {symbol} {timeframe}, threshold {threshold}")
+                print("---------------------------------------------------")
+                results = backtest(symbol, timeframe, threshold, version)
                 all_results.extend(results)
                 all_symbols_results.extend(results)
-                print(f"Backtesting symbol {symbol} with threshold {threshold}...")
 
                 # Summary Results
                 # print("Backtesting Summary:")
@@ -132,7 +137,7 @@ def backtest_all():
                 std_return = np.std([res["total_outcome"] for res in results])
                 sharpe_ratio = mean_return / std_return if std_return != 0 else 0
                 print("---------------------------------------------------")
-                print(f"Sharpe Ration: {sharpe_ratio:.3f}, Total Profit: {total_profit:.2f}, Total Trades: {total_trades}, Total Wins: {total_wins}, Total Win%: {total_win_percentage:.1f}%\n")
+                print(f"Sharpe Ratio: {sharpe_ratio:.3f}, Total Profit: {total_profit:.2f}, Total Trades: {total_trades}, Total Wins: {total_wins}, Total Win%: {total_win_percentage:.1f}%\n")
                 
                 # Update best results for the symbol
                 # if total_profit > best_results[symbol]["total_outcome"]:
@@ -143,21 +148,36 @@ def backtest_all():
                     best_results[symbol]["num_trades"] = total_trades
                     best_results[symbol]["win_trades"] = total_wins
                     best_results[symbol]["total_win_percentage"] = total_win_percentage
+                # if sum of trades in results is 0, skip
+                if sum(res["num_trades"] for res in results) == 0:
+                    print(f"No trades executed for {symbol} with threshold {threshold}. Skippint all higher thresholds.")
+                    break
         # Print best results for each symbol
-        print("\nBest Results:")
+        print("Best Results:")
         for symbol, res in best_results.items():
             print(f"{symbol}: Threshold:{res['threshold']}| Sharpe Ratio: {res['sharpe_ratio']:.2f}, Total Profit: {res['total_outcome']:.2f}, Total Trades: {res['num_trades']}, Wins: {res['win_trades']}, Win%: {res['total_win_percentage']:.1f}%")
         print("---------------------------------------------------")
-        print("Backtesting completed.")
+        print(f"Backtesting completed for timeframe: {timeframe}")
         # Save results to CSV to backtesting directory
         all_results_df = pd.DataFrame(all_symbols_results)
         # Round the values for better readability
         all_results_df["win_percentage"] = all_results_df["win_percentage"].round(2)
         all_results_df["total_outcome"] = all_results_df["total_outcome"].round(4)
-        all_results_df.to_csv(os.path.join(BACKTESTING_DIR, version, "backtesting_results.csv"), index=False)
+        all_results_df.to_csv(os.path.join(BACKTESTING_DIR, timeframe, version, "backtesting_results.csv"), index=False)
         print(f"All backtesting results saved to {version}/backtesting_results.csv\n")
 
+def backtest_all_timeframes():
+    """
+    Backtest all timeframes.
+    This function iterates through the timeframes,
+    and calls the backtest_all.
+    It prints the summary of the backtesting results.
+    """
+    for timeframe in TIMEFRAMES:
+        print(f"\nStarting backtesting for timeframe: {timeframe}\n")
+        backtest_all(timeframe)
+
 if __name__ == "__main__":
-    backtest_all()
+    backtest_all_timeframes()
     # Note: The backtest_all() function is called in the main block.
     # The backtest() function is called for each symbol in the SYMBOLS list.

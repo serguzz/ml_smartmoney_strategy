@@ -2,14 +2,16 @@ import os
 import numpy as np
 from scipy.signal import argrelextrema
 # import ta
-import talib.abstract as ta # use talib.abstract for freqtrade compatibility
+import talib.abstract as ta # use talib.abstract for Freqtrade compatibility
 from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
-from config import SYMBOLS, INTERVAL, START_DATE, END_DATE, INDICATORS_DIR
+from config import SYMBOLS, TIMEFRAMES, START_DATE, END_DATE
+from config import INDICATORS_DIR
 
 # Ensure indicators directories exist for spot and futures
 os.makedirs(INDICATORS_DIR, exist_ok=True)
-for market in ["spot", "futures"]:
-    os.makedirs(os.path.join(INDICATORS_DIR, market), exist_ok=True)
+for timeframe in TIMEFRAMES:
+    for market in ["spot", "futures"]:
+        os.makedirs(os.path.join(INDICATORS_DIR, timeframe, market), exist_ok=True)
 
 # Constants
 SECONDS_PER_HOUR = 60 * 60
@@ -106,17 +108,18 @@ def add_smc_indicators_bearish(df):
 # Fetch and preprocess data
 def prepare_technical_data():
     # all_data = {}
-    for symbol in SYMBOLS:
-        df_spot = fetch_binance_spot_data(symbol, INTERVAL, START_DATE, END_DATE)
-        df_futures = fetch_binance_futures_data(symbol, INTERVAL, START_DATE, END_DATE)
-        for df in [df_spot, df_futures]:
-            df = add_technical_indicators(df)
-            df = add_smc_indicators_bullish(df)
-            df = add_smc_indicators_bearish(df)
-            df.dropna(inplace=True)
-            # all_data[symbol] = df
-        df_spot.to_csv(f"{INDICATORS_DIR}/spot/{symbol}.csv", index=False)
-        df_futures.to_csv(f"{INDICATORS_DIR}/futures/{symbol}.csv", index=False)
+    for timeframe in TIMEFRAMES:
+        for symbol in SYMBOLS:
+            df_spot = fetch_binance_spot_data(symbol, timeframe, START_DATE, END_DATE)
+            df_futures = fetch_binance_futures_data(symbol, timeframe, START_DATE, END_DATE)
+            for df in [df_spot, df_futures]:
+                df = add_technical_indicators(df)
+                df = add_smc_indicators_bullish(df)
+                df = add_smc_indicators_bearish(df)
+                df.dropna(inplace=True)
+                # all_data[symbol] = df
+            df_spot.to_csv(os.path.join(INDICATORS_DIR, timeframe, "spot", f"{symbol}.csv"), index=False)
+            df_futures.to_csv(os.path.join(INDICATORS_DIR, timeframe, "futures", f"{symbol}.csv"), index=False)
     
     print("Technical indicators added to spot and futures!")
     return # all_data

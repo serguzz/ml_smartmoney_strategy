@@ -11,15 +11,20 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import average_precision_score
 
 from config import INDICATORS_DIR, TARGETS_DIR, MODELS_DIR, PREDICTIONS_DIR
+from config import TIMEFRAMES
 from config import STOPLOSS, TAKEPROFIT
 from config import MODEL_NAMES
 
 # Ensure directories exist
-os.makedirs(INDICATORS_DIR, exist_ok=True)
-os.makedirs(MODELS_DIR, exist_ok=True)
-os.makedirs(PREDICTIONS_DIR, exist_ok=True)
-os.makedirs(TARGETS_DIR, exist_ok=True)
-
+for timeframe in TIMEFRAMES:
+    for market in ["spot", "futures"]:
+        # make models dirs
+        os.makedirs(os.path.join(MODELS_DIR, timeframe, market), exist_ok=True)
+        # make predictions dirs
+        os.makedirs(os.path.join(PREDICTIONS_DIR, timeframe, market), exist_ok=True)
+        # make targets dirs
+        os.makedirs(os.path.join(TARGETS_DIR, timeframe, market), exist_ok=True)
+        
 # Constants
 PREDICTION_WINDOW = 20  # Number of candles to predict into the future
 
@@ -118,8 +123,10 @@ def add_target_short(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT,
     return df
 
 # Function to train models
-def train_models():
-    print("\nTraining models...")
+def train_models(timeframe):
+    """
+    Train models for the given timeframe.
+    """
     # Define version for the current training session
     ############################################################################
     version = "v_" + datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -135,14 +142,14 @@ def train_models():
         for market in ["spot", "futures"]:            
             # Create directories for models and predictions
             ############################################################################
-            indicators_subdir = os.path.join(INDICATORS_DIR, market)
-            targets_subdir = os.path.join(TARGETS_DIR, market)
-            prediction_subdir = os.path.join(PREDICTIONS_DIR, market)
-            models_subdir = os.path.join(MODELS_DIR, market)
+            indicators_subdir = os.path.join(INDICATORS_DIR, timeframe, market)
+            targets_subdir = os.path.join(TARGETS_DIR, timeframe, market)
+            prediction_subdir = os.path.join(PREDICTIONS_DIR, timeframe, market)
+            models_subdir = os.path.join(MODELS_DIR, timeframe, market)
 
             # Versioned subdirectory for predictions and models
-            versioned_pred_subdir = os.path.join(PREDICTIONS_DIR, f"{version}", market)
-            versioned_models_subdir = os.path.join(MODELS_DIR, f"{version}", market)
+            versioned_pred_subdir = os.path.join(PREDICTIONS_DIR, timeframe, f"{version}", market)
+            versioned_models_subdir = os.path.join(MODELS_DIR, timeframe, f"{version}", market)
             
             # Create folders if they do not exist
             os.makedirs(models_subdir, exist_ok=True)
@@ -155,7 +162,7 @@ def train_models():
             for filename in os.listdir(indicators_subdir):
                 if filename.endswith(".csv"):
                     pair = filename.replace(".csv", "")
-                    print(f"Training models for {pair} {market}...")
+                    print(f"Training models for {pair} {timeframe} {market}...")
                     
                     # Load dataset
                     df = pd.read_csv(os.path.join(indicators_subdir, filename)) 
@@ -185,6 +192,7 @@ def train_models():
                         model = models[model_name]
                         model.fit(X_train, y_train)
 
+                        # TODO: Rename files to {model_name}_{pair}_{timeframe}_{direction}.pkl
                         # Define model paths
                         model_filename = f"{direction}_{pair}_{model_name}.pkl"
                         versioned_model_path = os.path.join(versioned_models_subdir, model_filename)
@@ -245,8 +253,18 @@ def train_models():
     else:
         print("No models have changed.")
         # If no models were changed, remove the versioned directories
-        shutil.rmtree(os.path.join(MODELS_DIR, f"{version}"))
-        shutil.rmtree(os.path.join(PREDICTIONS_DIR, f"{version}"))
+        shutil.rmtree(os.path.join(MODELS_DIR, timeframe, f"{version}"))
+        shutil.rmtree(os.path.join(PREDICTIONS_DIR, timeframe, f"{version}"))
+
+
+def train_all_timeframes_models():
+    """
+    Train models for all timeframes.
+    """
+    for timeframe in TIMEFRAMES:
+        print(f"Training models for timeframe: {timeframe}")
+        # Call the function to train models for the specific timeframe
+        train_models(timeframe)
 
 if __name__ == "__main__":
-    train_models()
+    train_all_timeframes_models()

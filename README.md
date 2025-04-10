@@ -39,6 +39,11 @@ smartmoney_ml_strategy/
 └── requirements.txt    # Python dependencies
 ```
 
+## Detailed Features
+- OHLCV price data and Indicators are stored in separate folder for each timeframe: 5m, 1h, etc.
+- Trained models, predictions and backtesting results are stored in versioned folders to track progress of trained models
+
+
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request.
