@@ -20,18 +20,17 @@ shift_growth_cols = []
 # Function to generate technical indicators
 def add_technical_indicators(df):
     # df['ema50'] = ta.trend.ema_indicator(df['close'], window=50)  # ta version
-    df['ema50'] = ta.EMA(df['close'], window=50)
-    df['ema100'] = ta.EMA(df['close'], window=100)
-    df['ema200'] = ta.EMA(df['close'], window=200)
     # df['rsi'] = ta.momentum.rsi(df['close'], window=14)   # ta version
     df['rsi'] = ta.RSI(df['close'], window=14)
-    df['ema50_200_bullish'] = (df['ema50'] > df['ema200']).astype(int)
-    df['ema50_100_bullish'] = (df['ema50'] > df['ema100']).astype(int)
     df['rsi_oversold'] = (df['rsi'] < 30).astype(int)
     df['rsi_overbought'] = (df['rsi'] > 70).astype(int)
-    df['bullish_trend_50'] = (df['close'] > df['ema50']).astype(int)
-    df['bullish_trend_100'] = (df['close'] > df['ema100']).astype(int)
-    df['bullish_trend_200'] = (df['close'] > df['ema200']).astype(int)
+    # EMA indicators for different windows
+    ema_windows = [50, 100, 200]
+    for window in ema_windows:
+        df[f'ema{window}'] = ta.EMA(df['close'], timeperiod=window)
+        df[f'bullish_trend_{window}'] = (df['close'] > df[f'ema{window}']).astype(int)
+    df['ema50_200_bullish'] = (df['ema50'] > df['ema200']).astype(int)
+    df['ema50_100_bullish'] = (df['ema50'] > df['ema100']).astype(int)
     # shift_growth_cols = []
     for i in range(1, 6):
         df[f'shift_{i}_growth'] = (df['close'].shift(i - 1) > df['close'].shift(i)).astype(int)
