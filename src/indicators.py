@@ -1,11 +1,11 @@
 import os
 import numpy as np
-from scipy.signal import argrelextrema
 # import ta
 import talib.abstract as ta # use talib.abstract for Freqtrade compatibility
 from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
 from config import SYMBOLS, TIMEFRAMES, START_DATE, END_DATE
 from config import INDICATORS_DIR
+from smc_indicators import add_smc_indicators
 
 # Ensure indicators directories exist for spot and futures
 os.makedirs(INDICATORS_DIR, exist_ok=True)
@@ -38,91 +38,21 @@ def add_technical_indicators(df):
         shift_growth_cols.append(f'shift_{i}_growth')
     return df
 
-# Add Smart Money indicators BOS and CHOCH for Long trades
-def add_smc_indicators_bullish(df):
-    STRUCTURE_THRESHOLD = 4  # Threshold for structure distance
-    ROLLING_WINDOW = 10  # Rolling window for local extrema detection
-
-    # Find local highs
-    local_highs_idx = argrelextrema(df['high'].values, np.greater, order=ROLLING_WINDOW)[0]
-    df['local_high'] = np.zeros(len(df))
-    df.loc[local_highs_idx, 'local_high'] = df.loc[local_highs_idx, 'high']
-
-    # Forward-fill the last detected high to avoid NaNs
-    df['prev_high'] = df['local_high'].shift(1).ffill()
-
-    # Track the index of the last local high for structure distance calculation
-    df['prev_high_idx'] = np.nan
-    df.loc[local_highs_idx, 'prev_high_idx'] = local_highs_idx
-    df['prev_high_idx'] = df['prev_high_idx'].shift(1).ffill()
-
-    # Calculate distance from the previous high
-    df['prev_high_distance'] = df.index - df['prev_high_idx']
-
-    # Bullish BOS: Price closes above the previous high in an uptrend
-    df['bos_bullish'] = ((df['close'] > df['prev_high']) &
-                         (df['prev_high_distance'] > STRUCTURE_THRESHOLD) &
-                         (df['bullish_trend_50'] == 1)).astype(int)
-
-    # Bullish CHOCH: Price closes above the previous high in a downtrend (trend shift)
-    df['choch_bullish'] = ((df['close'] > df['prev_high']) &
-                           (df['prev_high_distance'] > STRUCTURE_THRESHOLD) &
-                           (df['bullish_trend_50'] == 0)).astype(int)
-
-    return df
-
-
-# Add Smart Money indicators BOS and CHOCH for Short trades
-def add_smc_indicators_bearish(df):
-    STRUCTURE_THRESHOLD = 4  # Threshold for structure distance
-    ROLLING_WINDOW = 10  # Rolling window for local extrema detection
-
-    # Find local lows
-    local_lows_idx = argrelextrema(df['low'].values, np.less, order=ROLLING_WINDOW)[0]
-    df['local_low'] = np.zeros(len(df))
-    df.loc[local_lows_idx, 'local_low'] = df.loc[local_lows_idx, 'low']
-
-    # Forward-fill the last detected low to avoid NaNs
-    df['prev_low'] = df['local_low'].shift(1).ffill()
-
-    # Track the index of the last local low for structure distance calculation
-    df['prev_low_idx'] = np.nan
-    df.loc[local_lows_idx, 'prev_low_idx'] = local_lows_idx
-    df['prev_low_idx'] = df['prev_low_idx'].shift(1).ffill()
-
-    # Calculate distance from the previous low
-    df['prev_low_distance'] = df.index - df['prev_low_idx']
-
-    # Bearish BOS: Price closes below the previous low in a downtrend
-    df['bos_bearish'] = ((df['close'] < df['prev_low']) &
-                      (df['prev_low_distance'] > STRUCTURE_THRESHOLD) &
-                      (df['bullish_trend_50'] == 0)).astype(int) # no bullish trend
-
-    # Bearish CHOCH: Price closes below the previous low in an uptrend (trend shift)
-    df['choch_bearish'] = ((df['close'] < df['prev_low']) &
-                        (df['prev_low_distance'] > STRUCTURE_THRESHOLD) &
-                        (df['bullish_trend_50'] == 1)).astype(int) # bullish trend 
-
-    return df
-
 # Fetch and preprocess data
 def prepare_technical_data():
-    # all_data = {}
     for timeframe in TIMEFRAMES:
         for symbol in SYMBOLS:
             df_spot = fetch_binance_spot_data(symbol, timeframe, START_DATE, END_DATE)
             df_futures = fetch_binance_futures_data(symbol, timeframe, START_DATE, END_DATE)
             for df in [df_spot, df_futures]:
                 df = add_technical_indicators(df)
-                df = add_smc_indicators_bullish(df)
-                df = add_smc_indicators_bearish(df)
+                df = add_smc_indicators(df)
                 df.dropna(inplace=True)
-                # all_data[symbol] = df
             df_spot.to_csv(os.path.join(INDICATORS_DIR, timeframe, "spot", f"{symbol}.csv"), index=False)
             df_futures.to_csv(os.path.join(INDICATORS_DIR, timeframe, "futures", f"{symbol}.csv"), index=False)
     
     print("Technical indicators added to spot and futures!")
-    return # all_data
+    return
 
 if __name__ == "__main__":
     prepare_technical_data()

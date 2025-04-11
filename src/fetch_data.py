@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import requests
 from datetime import datetime
-from config import SPOT_BASE_URL, FUTURES_BASE_URL, SYMBOLS, INTERVAL, START_DATE, END_DATE
+from config import SPOT_BASE_URL, FUTURES_BASE_URL, SYMBOLS, START_DATE, END_DATE
 from config import TIMEFRAMES
 from config import OHLCV_DIR
 
