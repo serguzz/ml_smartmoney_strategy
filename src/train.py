@@ -5,6 +5,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 import xgboost as xgb
 import catboost as cb
 from sklearn.model_selection import train_test_split
@@ -41,7 +42,7 @@ FEATURE_COLS += shift_growth_cols
 
 
 # Functions to add Long target column 
-def add_target_long(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
+def add_target_long(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT, stoploss=STOPLOSS) -> DataFrame:
     """
     Adds 'target_long' column to df:
     target_long = 1 if price increases by `takeprofit` before dropping by `stoploss`
@@ -82,7 +83,7 @@ def add_target_long(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT, 
     return df
 
 # Function to add Short target column
-def add_target_short(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT, stoploss=STOPLOSS):
+def add_target_short(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT, stoploss=STOPLOSS) -> DataFrame:
     """
     Adds 'target_short' column to df:
     target_short = 1 if price decreases by `takeprofit` before uprising by `stoploss`
@@ -123,7 +124,7 @@ def add_target_short(df, future_window=PREDICTION_WINDOW, takeprofit=TAKEPROFIT,
     return df
 
 # Function to train models
-def train_models(timeframe):
+def train_models(timeframe) -> None:
     """
     Train models for the given timeframe.
     """
@@ -257,7 +258,7 @@ def train_models(timeframe):
         shutil.rmtree(os.path.join(PREDICTIONS_DIR, timeframe, f"{version}"))
 
 
-def train_all_timeframes_models():
+def train_all_timeframes_models() -> None:
     """
     Train models for all timeframes.
     """

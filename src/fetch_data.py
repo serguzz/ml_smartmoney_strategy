@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from pandas import DataFrame
 import requests
 from datetime import datetime
 from config import SPOT_BASE_URL, FUTURES_BASE_URL, SYMBOLS, START_DATE, END_DATE
@@ -25,7 +26,17 @@ for timeframe in TIMEFRAMES:
         os.makedirs(os.path.join(OHLCV_DIR, timeframe, market), exist_ok=True)
 
 # Function to fetch historical data with pagination
-def fetch_binance_spot_data(symbol, interval, start_date, end_date):
+def fetch_binance_spot_data(symbol, interval, start_date, end_date) -> DataFrame:
+    """
+    Fetches historical spot data from Binance API and saves it to a CSV file.
+    Args:
+        symbol (str): The trading pair symbol (e.g., 'BTCUSDT').
+        interval (str): The time interval for the data (e.g., '5m', '1h').
+        start_date (str): The start date for the data in 'YYYY-MM-DD' format.
+        end_date (str): The end date for the data in 'YYYY-MM-DD' format.
+    Returns:
+        DataFrame: A DataFrame containing the historical data.
+    """
     # File path for saving spot data
     file_path = os.path.join(OHLCV_DIR, interval, "spot", f"{symbol}.csv")
     if os.path.exists(file_path):
@@ -55,7 +66,17 @@ def fetch_binance_spot_data(symbol, interval, start_date, end_date):
     full_df.to_csv(file_path, index=False)
     return full_df
 
-def fetch_binance_futures_data(symbol, interval, start_date, end_date):
+def fetch_binance_futures_data(symbol, interval, start_date, end_date) -> DataFrame:
+    """
+    Fetches historical futures data from Binance API and saves it to a CSV file.
+    Args:
+        symbol (str): The trading pair symbol (e.g., 'BTCUSDT').
+        interval (str): The time interval for the data (e.g., '5m', '1h').
+        start_date (str): The start date for the data in 'YYYY-MM-DD' format.
+        end_date (str): The end date for the data in 'YYYY-MM-DD' format.
+    Returns:
+        DataFrame: A DataFrame containing the historical data.
+    """
     file_path = os.path.join(OHLCV_DIR, interval, "futures", f"{symbol}.csv")
     if os.path.exists(file_path):
         print(f"Futures price data for {symbol}, {interval} already exists. Loading from file...")
@@ -101,7 +122,10 @@ def fetch_binance_futures_data(symbol, interval, start_date, end_date):
 
 
 # Fetch and preprocess data
-def main():
+def main() -> None:
+    """
+    Main function to fetch and preprocess historical data from Binance.
+    """
     # all_data = {}
     print("\nFetching historical data...")
     for timeframe in TIMEFRAMES:

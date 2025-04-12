@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 from config import SYMBOLS, TIMEFRAMES, STOPLOSS, TAKEPROFIT
 from config import MODEL_NAMES, PREDICTIONS_DIR, BACKTESTING_DIR
 
@@ -19,7 +20,12 @@ MAKER_FEE = 0.0005  # Example exchange fee (0.05%)
 
 # Read name of versioned predictions directory
 # From PREDICTIONS_DIR, get the latest version name
-def get_latest_version(timeframe):
+def get_latest_version(timeframe) -> str:
+    """
+    Get the latest version of the predictions directory for a given timeframe.
+    This function checks the PREDICTIONS_DIR for the latest versioned directory
+    and returns the directory name, or '' if no directories are found.
+    """
     # Get all directories in PREDICTIONS_DIR for the given timeframe
     predictions_dir = os.path.join(PREDICTIONS_DIR, timeframe)
     dirs = [d for d in os.listdir(predictions_dir) if os.path.isdir(predictions_dir)]
@@ -34,7 +40,7 @@ def get_latest_version(timeframe):
 # The function calculates the number of trades, win trades, loss trades,
 # and total outcome based on the model predictions
 # It iterates through prediction in a directory, whether current or versioned
-def backtest(symbol, timeframe, threshold, version):
+def backtest(symbol, timeframe, threshold, version) -> list:
     """
     Backtest the model predictions for a given symbol.
     This function calculates the number of trades, win trades, loss trades,
@@ -88,7 +94,7 @@ def backtest(symbol, timeframe, threshold, version):
                     })
     return results
 
-def backtest_all(timeframe):
+def backtest_all(timeframe) -> DataFrame:
     """
     Backtest all symbols with different thresholds.
     This function iterates through the symbols and thresholds,
@@ -165,8 +171,10 @@ def backtest_all(timeframe):
         all_results_df["total_outcome"] = all_results_df["total_outcome"].round(4)
         all_results_df.to_csv(os.path.join(BACKTESTING_DIR, timeframe, version, "backtesting_results.csv"), index=False)
         print(f"All backtesting results saved to {version}/backtesting_results.csv\n")
+    
+    return all_results_df
 
-def backtest_all_timeframes():
+def backtest_all_timeframes() -> None:
     """
     Backtest all timeframes.
     This function iterates through the timeframes,

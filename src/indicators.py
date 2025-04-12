@@ -1,5 +1,5 @@
 import os
-import numpy as np
+from pandas import DataFrame
 # import ta
 import talib.abstract as ta # use talib.abstract for Freqtrade compatibility
 from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
@@ -18,7 +18,7 @@ SECONDS_PER_HOUR = 60 * 60
 shift_growth_cols = []
 
 # Function to generate technical indicators
-def add_technical_indicators(df):
+def add_technical_indicators(df) -> DataFrame:
     # df['ema50'] = ta.trend.ema_indicator(df['close'], window=50)  # ta version
     # df['rsi'] = ta.momentum.rsi(df['close'], window=14)   # ta version
     df['rsi'] = ta.RSI(df['close'], window=14)
@@ -38,7 +38,11 @@ def add_technical_indicators(df):
     return df
 
 # Fetch and preprocess data
-def prepare_technical_data():
+def prepare_technical_data() -> None:
+    """
+    Calls the data fetching functions for spot and futures data,
+    adds technical indicators, and saves the data to CSV files.
+    """
     for timeframe in TIMEFRAMES:
         for symbol in SYMBOLS:
             df_spot = fetch_binance_spot_data(symbol, timeframe, START_DATE, END_DATE)

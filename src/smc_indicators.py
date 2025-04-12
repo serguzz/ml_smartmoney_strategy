@@ -1,9 +1,10 @@
 import numpy as np
+from pandas import DataFrame
 from scipy.signal import argrelextrema
 
 # Function to add Smart Money Concepts (SMC) indicators
 # Add Smart Money indicators BOS and CHOCH for both Long and Short trades
-def add_smc_indicators(df):
+def add_smc_indicators(df) -> DataFrame:
     STRUCTURE_THRESHOLD = 4  # Threshold for structure distance
     ROLLING_WINDOW = 10  # Rolling window for local extrema detection
 
