@@ -18,6 +18,7 @@ END_DATE = "2025-03-26"
 # TODO: Test other timeframes: 1m, 5m, 15m, 30m, 1h, 4h, 1d
 # Note: "5m" timeframe does not work for this strategy
 TIMEFRAMES = ["1h"]  # Add more timeframes as needed
+MARKETS = ["spot", "futures"]
 
 # Backtesting Constants
 STOPLOSS = 0.01
