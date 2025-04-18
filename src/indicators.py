@@ -3,7 +3,7 @@ from pandas import DataFrame
 # import ta
 import talib.abstract as ta # use talib.abstract for Freqtrade compatibility
 from fetch_data import fetch_binance_spot_data, fetch_binance_futures_data
-from config import SYMBOLS, TIMEFRAMES, START_DATE, END_DATE
+from config import SYMBOLS, TIMEFRAMES, MARKETS, START_DATE, END_DATE
 from config import INDICATORS_DIR
 from smc_indicators import add_smc_indicators
 
@@ -45,14 +45,18 @@ def prepare_technical_data() -> None:
     """
     for timeframe in TIMEFRAMES:
         for symbol in SYMBOLS:
-            df_spot = fetch_binance_spot_data(symbol, timeframe, START_DATE, END_DATE)
-            df_futures = fetch_binance_futures_data(symbol, timeframe, START_DATE, END_DATE)
-            for df in [df_spot, df_futures]:
+            symbol_data = {}
+            if "spot" in MARKETS:
+                symbol_data["spot"] = fetch_binance_spot_data(symbol, timeframe, START_DATE, END_DATE)
+            if "futures" in MARKETS:
+                symbol_data["futures"] = fetch_binance_futures_data(symbol, timeframe, START_DATE, END_DATE)
+            for market, df in symbol_data.items():
                 df = add_technical_indicators(df)
                 df = add_smc_indicators(df)
                 df.dropna(inplace=True)
-            df_spot.to_csv(os.path.join(INDICATORS_DIR, timeframe, "spot", f"{symbol}.csv"), index=False)
-            df_futures.to_csv(os.path.join(INDICATORS_DIR, timeframe, "futures", f"{symbol}.csv"), index=False)
+                df.to_csv(os.path.join(INDICATORS_DIR, timeframe, market, f"{symbol}.csv"), index=False)
+            # df_spot.to_csv(os.path.join(INDICATORS_DIR, timeframe, "spot", f"{symbol}.csv"), index=False)
+            # df_futures.to_csv(os.path.join(INDICATORS_DIR, timeframe, "futures", f"{symbol}.csv"), index=False)
     
     print("Technical indicators added to spot and futures!")
     return

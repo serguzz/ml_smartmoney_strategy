@@ -4,7 +4,7 @@ from pandas import DataFrame
 import requests
 from datetime import datetime
 from config import SPOT_BASE_URL, FUTURES_BASE_URL, SYMBOLS, START_DATE, END_DATE
-from config import TIMEFRAMES
+from config import TIMEFRAMES, MARKETS
 from config import OHLCV_DIR
 
 # Constants
@@ -130,8 +130,10 @@ def main() -> None:
     print("\nFetching historical data...")
     for timeframe in TIMEFRAMES:
         for symbol in SYMBOLS:
-            fetch_binance_spot_data(symbol, timeframe, START_DATE, END_DATE)
-            fetch_binance_futures_data(symbol, timeframe, START_DATE, END_DATE)
+            if "spot" in MARKETS:
+                fetch_binance_spot_data(symbol, timeframe, START_DATE, END_DATE)
+            if "futures" in MARKETS:
+                fetch_binance_futures_data(symbol, timeframe, START_DATE, END_DATE)
         
     print("Historical data fetched!")
     return # all_data

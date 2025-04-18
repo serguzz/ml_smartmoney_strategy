@@ -12,13 +12,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import average_precision_score
 
 from config import INDICATORS_DIR, TARGETS_DIR, MODELS_DIR, PREDICTIONS_DIR
-from config import TIMEFRAMES
+from config import TIMEFRAMES, MARKETS
 from config import STOPLOSS, TAKEPROFIT
 from config import MODEL_NAMES
 
 # Ensure directories exist
 for timeframe in TIMEFRAMES:
-    for market in ["spot", "futures"]:
+    for market in MARKETS:
         # make models dirs
         os.makedirs(os.path.join(MODELS_DIR, timeframe, market), exist_ok=True)
         # make predictions dirs
@@ -140,7 +140,7 @@ def train_models(timeframe) -> None:
         # Load data and train models for spot and futures (for each file)
         # Assuming the data is in INDICATORS_DIR/spot and INDICATORS_DIR/futures
         ############################################################################
-        for market in ["spot", "futures"]:            
+        for market in MARKETS:            
             # Create directories for models and predictions
             ############################################################################
             indicators_subdir = os.path.join(INDICATORS_DIR, timeframe, market)
