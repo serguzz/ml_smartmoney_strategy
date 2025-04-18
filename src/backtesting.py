@@ -185,6 +185,14 @@ def backtest_timeframe(timeframe) -> DataFrame:
             save_dir = os.path.join(BACKTESTING_DIR, timeframe, version)
             os.makedirs(save_dir, exist_ok=True)
             symbol_results_df.to_csv(os.path.join(save_dir, f"{symbol}_backtesting_results.csv"), index=False)
+            # Sort results by metric: score = win_percentage * log(num_trades)
+            # and save to a file
+            symbol_results_df['score'] = (symbol_results_df['win_percentage'] * np.log(symbol_results_df['num_trades'] + 1)).round(1)
+            symbol_results_df = symbol_results_df.sort_values(
+                by=['market','direction','score'], 
+                ascending=[True, True, False]
+                )
+            symbol_results_df.to_csv(os.path.join(save_dir, f"{symbol}_results_analyzed.csv"), index=False)
 
         print("---------------------------------------------------")
         print(f"Backtesting completed for {timeframe}")
