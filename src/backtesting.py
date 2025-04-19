@@ -19,6 +19,8 @@ WIN_THRESHOLDS = [0.35, 0.40, 0.45, 0.50, 0.55, 0.65, 0.70, 0.75, 0.80, 0.85]
 TAKER_FEE = 0.001  # Example exchange fee (0.1%)
 MAKER_FEE = 0.0005  # Example exchange fee (0.05%)
 
+MIN_TRADES_COUNT = 10 # Minimum required trades count to consider a threshold
+
 # Read name of versioned predictions directory
 # From PREDICTIONS_DIR, get the latest version name
 def get_latest_version(timeframe) -> str:
@@ -169,8 +171,8 @@ def backtest_timeframe(timeframe) -> DataFrame:
                         best_result["total_win_percentage"] = total_win_percentage
 
                     # if sum of trades in results is 0, skip
-                    if sum(res["num_trades"] for res in results) == 0:
-                        print(f"No trades executed for {symbol} with threshold {threshold}. Skippint all higher thresholds.")
+                    if sum(res["num_trades"] for res in results) < MIN_TRADES_COUNT:
+                        print(f"Less than {MIN_TRADES_COUNT} trades executed for {symbol} with threshold {threshold}. Skippint all higher thresholds.")
                         break
                 
                 # Print best results for this symbol and market
