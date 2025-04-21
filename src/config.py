@@ -13,10 +13,12 @@ MODELS_DIR = os.path.join(BASE_DIR, "../models")
 SPOT_BASE_URL = "https://api.binance.com/api/v3/klines"
 FUTURES_BASE_URL = "https://fapi.binance.com/fapi/v1/klines"
 SYMBOLS = ["BTCUSDT", "ETHUSDT","XRPUSDT",
-           # "1INCHUSDT", "AAVEUSDT", "ADAUSDT", "ALGOUSDT", "APTUSDT",
-           # "ARBUSDT", "ATOMUSDT", "AVAXUSDT", "DOGEUSDT", "DOTUSDT",
-           # "DYDXUSDT", "FILUSDT", "GRTUSDT", "HBARUSDT", "INJUSDT",
-           # "LDOUSDT", "LINKUSDT", "LTCUSDT", "QNTUSDT"
+           '''
+           "1INCHUSDT", "AAVEUSDT", "ADAUSDT", "ALGOUSDT", "APTUSDT",
+           "ARBUSDT", "ATOMUSDT", "AVAXUSDT", "DOGEUSDT", "DOTUSDT",
+           "DYDXUSDT", "FILUSDT", "GRTUSDT", "HBARUSDT", "INJUSDT",
+           "LDOUSDT", "LINKUSDT", "LTCUSDT", "QNTUSDT"
+           '''
            ]
 START_DATE = "2023-01-01"
 END_DATE = "2025-03-26"

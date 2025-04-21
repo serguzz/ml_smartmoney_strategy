@@ -40,6 +40,18 @@ def get_latest_version(timeframe) -> str:
     # Return the latest directory name, '' if no directories found
     return dirs[-1] if dirs else ''  # else None
 
+# Computes score of the result row
+def compute_score(row):
+    '''
+    Based on 'win_percentage', 'num_trades', 'total_outcome'
+    calculates 'score' rate of the backtesting run parameters.
+    '''
+    if row['num_trades'] < 30:
+        return -50
+    base_score = row['win_percentage'] * np.log(row['num_trades'] + 1)
+    if row['total_outcome'] < 0:
+        return base_score * row['total_outcome']  # will be negative
+    return base_score
 
 # Function to backtest the model predictions
 # for a given symbol and threshold
@@ -126,7 +138,11 @@ def backtest_timeframe(timeframe) -> DataFrame:
         print("No versions found. Backtesting only current version/dir.")
     
     for version in versions_to_backtest:  # Add latest version and empty string for non-versioned
-        print(f"\nBacktesting version: {version} !")        
+        print(f"\nBacktesting version: {version} !")
+        # Best results dataframe
+        best_results_df = pd.DataFrame(columns=['symbol','model','threshold','market',
+                                            'direction','num_trades','win_trades',
+                                            'win_percentage','total_outcome','score'])
         # Iterate through each symbol and threshold
         for symbol in SYMBOLS:
             symbol_results_df = pd.DataFrame()
@@ -189,13 +205,24 @@ def backtest_timeframe(timeframe) -> DataFrame:
             symbol_results_df.to_csv(os.path.join(save_dir, f"{symbol}_backtesting_results.csv"), index=False)
             # Sort results by metric: score = win_percentage * log(num_trades)
             # and save to a file
-            symbol_results_df['score'] = (symbol_results_df['win_percentage'] * np.log(symbol_results_df['num_trades'] + 1)).round(1)
+            # symbol_results_df['score'] = (symbol_results_df['win_percentage'] * np.log(symbol_results_df['num_trades'] + 1)).round(1)
+            symbol_results_df['score'] = symbol_results_df.apply(compute_score, axis=1).round(1)
             symbol_results_df = symbol_results_df.sort_values(
                 by=['market','direction','score'], 
                 ascending=[True, True, False]
                 )
             symbol_results_df.to_csv(os.path.join(save_dir, f"{symbol}_results_analyzed.csv"), index=False)
+            # chose best results for long/short for the symbol and add it to variable
+            # Get best long and short entries by score
+            best_long = symbol_results_df[symbol_results_df['direction'] == 'long'].sort_values(by='score', ascending=False).head(1)
+            best_short = symbol_results_df[symbol_results_df['direction'] == 'short'].sort_values(by='score', ascending=False).head(1)
 
+            # Combine them into a new DataFrame
+            best_symbol_res_df = pd.concat([best_long, best_short], ignore_index=True)
+            # Add to all best results
+            best_results_df = pd.concat([best_results_df, best_symbol_res_df], ignore_index=True)
+        
+        best_results_df.to_csv(os.path.join(save_dir, f"best_results.csv"), index=False)
         print("---------------------------------------------------")
         print(f"Backtesting completed for {timeframe}")
             
